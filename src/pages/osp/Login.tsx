@@ -1,0 +1,219 @@
+import React, { useState } from "react";
+import Footer from "../../components/osp/Footer";
+import Navbar from "../../components/osp/Navbar"; // ✅ adjust path if different
+import { API } from "../../config/api";
+import { useNavigate } from "react-router-dom";
+
+type LoginFormData = {
+  email: string;
+  password: string;
+};
+
+const Login: React.FC = () => {
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [formData, setFormData] = useState<LoginFormData>({
+    email: "",
+    password: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string>("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setLoading(true);
+
+    try {
+      const res = await fetch(API.LOGIN, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data: { message?: string; token?: string; user?: unknown } =
+        await res.json();
+
+      if (!res.ok) throw new Error(data?.message || "Login failed.");
+
+      if (data?.token) localStorage.setItem("token", data.token);
+      if (data?.user) localStorage.setItem("user", JSON.stringify(data.user));
+
+      navigate("/admin");
+    } catch (err: unknown) {
+      if (err instanceof Error) setErrorMsg(err.message);
+      else setErrorMsg("Server error.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+    return (
+      <section
+        id="activation"
+        className="relative z-10 w-full min-h-screen bg-[#482072] flex flex-col items-center overflow-hidden"
+      >
+        {/* Navbar */}
+        <div className="relative z-50 w-full">
+          <Navbar />
+        </div>
+
+        {/* Content - Ellipse White Container */}
+        <div
+          className="relative flex flex-col items-center justify-start w-full"
+          style={{ height: "900px" }}
+        >
+          <div
+            className="bg-white flex flex-col items-center justify-start absolute overflow-hidden"
+            style={{
+              width: "1711px",
+              height: "1122px",
+              top: "119px",
+              left: "-136px",
+              borderRadius: "50%",
+              boxShadow:
+                "0px -20px 33px 0px #FFFFFF42, 0px -40px 60px 20px #FFFFFF30, 0px -60px 80px 40px #FFFFFF20, inset 0px 20px 40px 0px rgba(255, 255, 255, 0.15), inset 0px 40px 70px 15px rgba(72, 32, 114, 0.3), inset 0px 80px 120px 40px rgba(72, 32, 114, 0.4), inset 0px 120px 160px 80px rgba(72, 32, 114, 0.25)",
+            }}
+          >
+            <div className="flex items-center justify-center gap-16 w-full px-20 pt-32">
+              {/* Left Side - Shield Icon */}
+              <div className="flex-shrink-0">
+                <div className="relative">
+                  <img
+                    src="assets/images/Login.png"
+                    alt=""
+                    width={300}
+                    height={350}
+                  />
+                </div>
+              </div>
+
+              {/* Right Side - Login Form */}
+              <div className="flex-1 max-w-md">
+                <h1 className="text-4xl font-bold text-[#482072] mb-2 text-center">
+                  Admin Login
+                </h1>
+                <p className="text-gray-600 mb-8 text-center">
+                  Sign in to access the admin dashboard
+                </p>
+
+                {errorMsg && (
+                  <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 text-sm">
+                    {errorMsg}
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <label className="block text-[#482072] font-bold mb-2 text-lg">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="you@example.com"
+                      className="w-full px-6 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-[#7B5DE8] text-lg"
+                      required
+                      autoComplete="email"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[#482072] font-bold mb-2 text-lg">
+                      Password
+                    </label>
+
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="Enter your password"
+                        className="w-full px-6 py-4 pr-14 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-[#7B5DE8] text-lg"
+                        required
+                        autoComplete="current-password"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-4 flex items-center justify-center text-gray-500 hover:text-[#6E4294] transition"
+                      >
+                        {showPassword ? <EyeIcon /> : <EyeOffIcon />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-[#6E4294] text-white py-4 rounded-full font-bold text-xl hover:bg-[#6A4BC4] transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {loading ? "Logging in..." : "Login"}
+                  </button>
+                </form>
+
+                <p className="text-gray-500 text-sm text-center mt-6">
+                  Having trouble? Contact support.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Footer />
+      </section>
+    );
+};
+
+export default Login;
+
+
+/* ───── ICONS ───── */
+
+const EyeIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+const EyeOffIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M1 1l22 22" />
+    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.08-6.11" />
+    <path d="M9.53 9.53A3 3 0 0 0 12 15a3 3 0 0 0 2.47-5.47" />
+    <path d="M14.47 14.47L9.53 9.53" />
+  </svg>
+);

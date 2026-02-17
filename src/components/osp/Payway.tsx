@@ -46,7 +46,7 @@ const Payway: React.FC = () => {
       </div>
 
       {/* Help Message */}
-      <div className="w-[85%] bg-white rounded-2xl px-8 py-4 flex items-center gap-4 shadow-lg">
+      <div className="w-[85%] bg-white rounded-2xl px-8 py-4 items-center gap-4 shadow-lg flex justify-center">
         <span className="text-2xl">🎧</span>
         <p className="text-gray-700 font-medium">
           Need help choosing a payment method? Our team is available on WhatsApp to assist you!

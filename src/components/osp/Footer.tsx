@@ -34,7 +34,7 @@ const Footer: React.FC = () => {
   ];
 
   return (
-    <footer className="relative w-full bg-[#482072] text-white">
+    <footer className="relative w-full bg-[#6E4294] text-white">
       {/* Main Footer Content */}
       <div className="px-4 py-16">
         <div className="max-w-7xl mx-auto">
@@ -42,10 +42,16 @@ const Footer: React.FC = () => {
             {/* Brand Section */}
             <div className="col-span-1">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
-                  <span className="text-[#482072] font-bold text-xl">O</span>
+                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center overflow-hidden">
+                  <img
+                    src="/assets/images/OSP_Logo.png" // ✅ change to your actual image path
+                    alt="OSP Logo"
+                    className="w-8 h-8 object-contain"
+                  />
                 </div>
-                <h2 className="text-2xl font-bold">Original Software Product (OSP)</h2>
+                <h2 className="text-2xl font-bold">
+                  Original Software Product (OSP)
+                </h2>
               </div>
               <p className="text-white/80 text-sm">
                 Your trusted source for genuine software products in Nepal.

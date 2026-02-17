@@ -36,32 +36,53 @@ const Navbar: React.FC = () => {
       }`}
     >
       <div
-        className={`w-[70%] bg-white/90 backdrop-blur-md rounded-full px-6 py-2 flex items-center shadow-lg shadow-white/50 mt-[43px] transition-all duration-300 ${
-          isScrolling ? "border-2 border-[#7B5DE8]" : "border-2 border-transparent"
+        className={`w-[70%] bg-white/90 backdrop-blur-md rounded-full px-5 py-2 flex items-center shadow-lg shadow-white/50 mt-[43px] transition-all duration-300 ${
+          isScrolling
+            ? ""
+            : "border-2 border-transparent"
         }`}
       >
         {/* Logo */}
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-[#7B5DE8] flex items-center justify-center text-white text-xl font-bold">
-            O
+          <div className="w-16 h-16 flex items-center justify-center overflow-hidden">
+            <img
+              src="assets/images/OSP_Logo.png"
+              alt="Logo"
+              className="w-14 h-14 object-contain"
+            />
           </div>
         </div>
 
         {/* Menu */}
-        <div className="hidden md:flex flex-1 justify-evenly text-gray-700 font-semibold text-lg text-center mx-6">
-          <button onClick={() => scrollToSection("hero")} className="hover:text-[#7B5DE8] transition-colors">
+        <div className="hidden md:flex flex-1 justify-evenly text-[#727272] font-semibold text-lg text-center mx-6">
+          <button
+            onClick={() => scrollToSection("hero")}
+            className="hover:text-[#6E4294] transition-colors"
+          >
             Home
           </button>
-          <button onClick={() => scrollToSection("products")} className="hover:text-[#7B5DE8] transition-colors">
+          <button
+            onClick={() => scrollToSection("products")}
+            className="hover:text-[#6E4294] transition-colors"
+          >
             Products
           </button>
-          <button onClick={() => scrollToSection("how-it-works")} className="hover:text-[#7B5DE8] transition-colors">
+          <button
+            onClick={() => scrollToSection("how-it-works")}
+            className="hover:text-[#6E4294] transition-colors"
+          >
             How it Works
           </button>
-          <button onClick={() => scrollToSection("why-choose")} className="hover:text-[#7B5DE8] transition-colors">
+          <button
+            onClick={() => scrollToSection("why-choose")}
+            className="hover:text-[#6E4294] transition-colors"
+          >
             About
           </button>
-          <button onClick={() => scrollToSection("contact")} className="hover:text-[#7B5DE8] transition-colors">
+          <button
+            onClick={() => scrollToSection("contact")}
+            className="hover:text-[#6E4294] transition-colors"
+          >
             Contact
           </button>
         </div>
@@ -69,7 +90,7 @@ const Navbar: React.FC = () => {
         {/* Button */}
         <button
           onClick={handleActivationClick}
-          className="bg-[#7B5DE8] text-white px-8 py-2 rounded-full shadow-md hover:scale-105 transition-transform duration-200 text-xl font-semibold"
+          className="bg-[#6E4294] text-white px-8 py-2 rounded-full shadow-md hover:scale-105 transition-transform duration-200 text-xl font-semibold"
         >
           Get Activation Key
         </button>
