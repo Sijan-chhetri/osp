@@ -1,12 +1,16 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import type { FC } from "react";
 import {
   Squares2X2Icon,
   UsersIcon,
-  RectangleGroupIcon,
   ChevronDownIcon,
   TagIcon,
+  SwatchIcon,
+  CubeIcon,
+  ClipboardDocumentListIcon,
+  PlusCircleIcon,
+  ListBulletIcon,
 } from "@heroicons/react/24/outline";
 
 interface AdminSidebarProps {
@@ -21,42 +25,62 @@ interface User {
   role?: string;
 }
 
+type DropdownKey = "categories" | "brands" | "softwares" | "plans" | null;
+
 const AdminSidebar: FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
-  const [openTemplateCategories, setOpenTemplateCategories] = useState(false);
-  const [openTemplates, setOpenTemplates] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<DropdownKey>(null);
 
-
-  const baseLink ="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ease-in-out";
-
-  const activeLink = "bg-primary/10 text-brown";
-
-  const inactiveLink ="text-brownSoft hover:text-brown hover:bg-primary/10 hover:translate-x-1";
-
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+  const [user] = useState<User | null>(() => {
+    const stored = localStorage.getItem("user");
+    if (!stored) return null;
+    try {
+      return JSON.parse(stored) as User;
+    } catch {
+      return null;
     }
-  }, []);
+  });
+
+  const baseLink =
+    "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ease-in-out";
+  const activeLink = "bg-[#6E4294]/20 text-[#482072]";
+  const inactiveLink =
+    "text-[#482072] hover:text-[#6E4294] hover:bg-[#6E4294]/10 hover:translate-x-1";
+
+  // ✅ Close dropdown when sidebar closes (mobile)
+  useEffect(() => {
+    if (!isOpen) setOpenDropdown(null);
+  }, [isOpen]);
+
+  const toggle = (key: Exclude<DropdownKey, null>) => {
+    setOpenDropdown((prev) => (prev === key ? null : key));
+  };
+
+  const handleNavClick = () => {
+    if (window.innerWidth < 1024) onClose();
+  };
+
+  const subLink = (isActive: boolean) =>
+    `flex items-center gap-2 px-3 py-2 rounded-md text-sm ${
+      isActive ? "text-brownSoft font-bold" : "text-brownSoft hover:font-bold"
+    }`;
 
   return (
     <aside
       className={`
-    fixed left-0 top-0 z-40 h-screen w-64 bg-white border-r border-slate-200 flex flex-col
-    transform transition-transform duration-300 ease-in-out
-    ${isOpen ? "translate-x-0" : "-translate-x-full"}
-    lg:translate-x-0
-  `}
+        fixed left-0 top-0 z-40 h-screen w-64 bg-white border-r border-slate-200 flex flex-col
+        transform transition-transform duration-300 ease-in-out
+        ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        lg:translate-x-0
+      `}
     >
       {/* LOGO */}
       <div className="px-5 py-6 flex items-center gap-3">
         <div>
           <img
             src="/assets/images/OSP_Logo.png"
-            alt="Buildify logo"
+            alt="OSP logo"
             className="h-[42px] cursor-pointer"
+            onClick={handleNavClick}
           />
         </div>
         <div>
@@ -72,6 +96,7 @@ const AdminSidebar: FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
         <NavLink
           to="/admin"
           end
+          onClick={handleNavClick}
           className={({ isActive }) =>
             `${baseLink} ${isActive ? activeLink : inactiveLink}`
           }
@@ -82,6 +107,7 @@ const AdminSidebar: FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
 
         <NavLink
           to="/admin/users"
+          onClick={handleNavClick}
           className={({ isActive }) =>
             `${baseLink} ${isActive ? activeLink : inactiveLink}`
           }
@@ -90,103 +116,162 @@ const AdminSidebar: FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
           User Management
         </NavLink>
 
+        {/* ================= CATEGORY DROPDOWN ================= */}
         <button
           type="button"
-          onClick={() => {
-            setOpenTemplateCategories((prev) => !prev);
-            setOpenTemplates(false); // close other dropdown
-          }}
+          onClick={() => toggle("categories")}
           className={`${baseLink} ${inactiveLink} w-full justify-between`}
         >
           <div className="flex items-center gap-3">
             <TagIcon className="w-5 h-5" />
-            Software Category
+            Software Categories
           </div>
           <ChevronDownIcon
             className={`w-4 h-4 transition-transform ${
-              openTemplateCategories ? "rotate-180" : ""
+              openDropdown === "categories" ? "rotate-180" : ""
             }`}
           />
         </button>
 
-        {openTemplateCategories && (
+        {openDropdown === "categories" && (
           <div className="ml-8 mt-1 space-y-1">
             <NavLink
-              to="/admin/category/softwareCreate"
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded-md text-sm ${
-                  isActive
-                    ? "text-brownSoft font-bold"
-                    : "text-brownSoft hover:font-bold"
-                }`
-              }
+              to="/admin/category/softwareCategoryCreate"
+              onClick={handleNavClick}
+              className={({ isActive }) => subLink(isActive)}
             >
+              <PlusCircleIcon className="w-4 h-4" />
               Create Category
             </NavLink>
 
             <NavLink
               to="/admin/category"
               end
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded-md text-sm ${
-                  isActive
-                    ? "text-brownSoft font-bold"
-                    : "text-brownSoft hover:font-bold"
-                }`
-              }
+              onClick={handleNavClick}
+              className={({ isActive }) => subLink(isActive)}
             >
+              <ListBulletIcon className="w-4 h-4" />
               Category List
             </NavLink>
           </div>
         )}
 
-        {/* TEMPLATES DROPDOWN */}
+        {/* ================= BRAND DROPDOWN ================= */}
         <button
           type="button"
-          onClick={() => {
-            setOpenTemplates((prev) => !prev);
-            setOpenTemplateCategories(false);
-          }}
+          onClick={() => toggle("brands")}
           className={`${baseLink} ${inactiveLink} w-full justify-between`}
         >
           <div className="flex items-center gap-3">
-            <RectangleGroupIcon className="w-5 h-5" />
-            Softwares
+            <SwatchIcon className="w-5 h-5" />
+            Software Brands
           </div>
           <ChevronDownIcon
             className={`w-4 h-4 transition-transform ${
-              openTemplates ? "rotate-180" : ""
+              openDropdown === "brands" ? "rotate-180" : ""
             }`}
           />
         </button>
 
-        {openTemplates && (
+        {openDropdown === "brands" && (
           <div className="ml-8 mt-1 space-y-1">
             <NavLink
-              to="/admin/templates/create"
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded-md text-sm ${
-                  isActive
-                    ? "text-brownSoft font-bold"
-                    : "text-brownSoft hover:font-bold"
-                }`
-              }
+              to="/admin/brands/softwareBrandCreate"
+              onClick={handleNavClick}
+              className={({ isActive }) => subLink(isActive)}
             >
-              Create Software
+              <PlusCircleIcon className="w-4 h-4" />
+              Create Brand
             </NavLink>
 
             <NavLink
-              to="/admin/templates"
+              to="/admin/brands"
               end
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded-md text-sm ${
-                  isActive
-                    ? "text-brownSoft font-bold"
-                    : "text-brownSoft hover:font-bold"
-                }`
-              }
+              onClick={handleNavClick}
+              className={({ isActive }) => subLink(isActive)}
             >
-              Software List
+              <ListBulletIcon className="w-4 h-4" />
+              Brand List
+            </NavLink>
+          </div>
+        )}
+
+        {/* ================= PRODUCTS DROPDOWN ================= */}
+        <button
+          type="button"
+          onClick={() => toggle("softwares")}
+          className={`${baseLink} ${inactiveLink} w-full justify-between`}
+        >
+          <div className="flex items-center gap-3">
+            <CubeIcon className="w-5 h-5" />
+            Software Products
+          </div>
+          <ChevronDownIcon
+            className={`w-4 h-4 transition-transform ${
+              openDropdown === "softwares" ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+
+        {openDropdown === "softwares" && (
+          <div className="ml-8 mt-1 space-y-1">
+            <NavLink
+              to="/admin/products/softwareProductCreate"
+              onClick={handleNavClick}
+              className={({ isActive }) => subLink(isActive)}
+            >
+              <PlusCircleIcon className="w-4 h-4" />
+              Create Product
+            </NavLink>
+
+            <NavLink
+              to="/admin/products"
+              end
+              onClick={handleNavClick}
+              className={({ isActive }) => subLink(isActive)}
+            >
+              <ListBulletIcon className="w-4 h-4" />
+              Product List
+            </NavLink>
+          </div>
+        )}
+
+        {/* ================= PLANS DROPDOWN ================= */}
+        <button
+          type="button"
+          onClick={() => toggle("plans")}
+          className={`${baseLink} ${inactiveLink} w-full justify-between`}
+        >
+          <div className="flex items-center gap-3">
+            <ClipboardDocumentListIcon className="w-5 h-5" />
+            Software Plans
+          </div>
+          <ChevronDownIcon
+            className={`w-4 h-4 transition-transform ${
+              openDropdown === "plans" ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+
+        {openDropdown === "plans" && (
+          <div className="ml-8 mt-1 space-y-1">
+            <NavLink
+              to="/admin/plans/softwarePlanCreate"
+              onClick={handleNavClick}
+              className={({ isActive }) => subLink(isActive)}
+            >
+              <PlusCircleIcon className="w-4 h-4" />
+              Create Plan
+            </NavLink>
+
+            <NavLink
+              to="/admin/plans"
+              end
+              onClick={handleNavClick}
+              className={({ isActive }) => subLink(isActive)}
+            >
+              <ListBulletIcon className="w-4 h-4" />
+              Plan List
             </NavLink>
           </div>
         )}
@@ -194,12 +279,12 @@ const AdminSidebar: FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
 
       {/* ADMIN FOOTER */}
       <div className="p-4 border-t border-slate-200 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-bold">
+        <div className="w-9 h-9 rounded-full bg-[#482072]/10 flex items-center justify-center text-[#482072] text-sm font-bold">
           {user?.username?.charAt(0).toUpperCase() || "A"}
         </div>
 
         <div className="flex-1">
-          <p className="text-sm font-medium text-brown">
+          <p className="text-sm font-medium text-[#482072]">
             {user?.username || "Admin"}
           </p>
           <p className="text-xs text-slate-400">{user?.email || ""}</p>

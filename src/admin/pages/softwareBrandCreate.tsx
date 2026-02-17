@@ -1,3 +1,4 @@
+// src/admin/pages/softwareBrandCreate.tsx
 import { useState } from "react";
 import type { FC } from "react";
 import toast from "react-hot-toast";
@@ -6,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 
 /* ================= TYPES ================= */
 
-export type SoftwareCategory = {
+export type SoftwareBrand = {
   id: string;
   name: string;
   is_active: boolean;
@@ -25,11 +26,11 @@ const getErrorMessage = (err: unknown): string => {
 
 /* ================= COMPONENT ================= */
 
-const SoftwareCategoryCreate: FC = () => {
+const SoftwareBrandCreate: FC = () => {
   const navigate = useNavigate();
 
-  const [name, setName] = useState<SoftwareCategory["name"]>("");
-  const [isActive, setIsActive] = useState<SoftwareCategory["is_active"]>(true);
+  const [name, setName] = useState<SoftwareBrand["name"]>("");
+  const [isActive, setIsActive] = useState<SoftwareBrand["is_active"]>(true);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,11 +47,11 @@ const SoftwareCategoryCreate: FC = () => {
       };
 
       if (!payload.name) {
-        toast.error("Category name is required");
+        toast.error("Brand name is required");
         return;
       }
 
-      const res = await fetch(API.CATEGORIES, {
+      const res = await fetch(API.BRANDS, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -59,19 +60,20 @@ const SoftwareCategoryCreate: FC = () => {
         body: JSON.stringify(payload),
       });
 
-      const data: ApiErrorResponse & { data?: SoftwareCategory } =
+      const data: ApiErrorResponse & { data?: SoftwareBrand } =
         await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Failed to create category");
+        throw new Error(data.message || "Failed to create brand");
       }
 
-      toast.success(data.message || "Category created successfully ✨");
+      toast.success(data.message || "Brand created successfully ✨");
 
       setName("");
       setIsActive(true);
 
-      navigate("/admin/category");
+      // change route if your list page route is different
+      navigate("/admin/brands");
     } catch (err: unknown) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -84,10 +86,10 @@ const SoftwareCategoryCreate: FC = () => {
       {/* ================= HEADER ================= */}
       <div>
         <h1 className="text-2xl font-semibold text-[#6E4294]">
-          Create Software Category
+          Create Software Brand
         </h1>
         <p className="text-sm text-[#482072]">
-          Add a new category to organize software products.
+          Add a new brand to organize software products.
         </p>
       </div>
 
@@ -98,14 +100,12 @@ const SoftwareCategoryCreate: FC = () => {
       >
         {/* NAME */}
         <div className="space-y-1">
-          <label className="text-sm font-medium text-brown">
-            Category Name
-          </label>
+          <label className="text-sm font-medium text-brown">Brand Name</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            placeholder="e.g. AI Tools"
+            placeholder="e.g. Microsoft"
             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
@@ -115,7 +115,7 @@ const SoftwareCategoryCreate: FC = () => {
           <div>
             <p className="text-sm font-medium text-brown">Active</p>
             <p className="text-xs text-brownSoft">
-              Inactive categories won’t be shown to users
+              Inactive brands won’t be shown to users
             </p>
           </div>
 
@@ -142,7 +142,7 @@ const SoftwareCategoryCreate: FC = () => {
             disabled={loading}
             className="px-6 py-2 rounded-lg bg-[#6E4294] text-white text-sm font-medium hover:bg-[#6E4294]/90 disabled:opacity-60"
           >
-            {loading ? "Creating..." : "Create Category"}
+            {loading ? "Creating..." : "Create Brand"}
           </button>
         </div>
       </form>
@@ -150,4 +150,4 @@ const SoftwareCategoryCreate: FC = () => {
   );
 };
 
-export default SoftwareCategoryCreate;
+export default SoftwareBrandCreate;
