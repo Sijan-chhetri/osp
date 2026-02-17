@@ -33,6 +33,13 @@ interface Product {
   plans: Plan[];
 }
 
+interface CartItem {
+  product: Product;
+  plan: Plan;
+  quantity: number;
+  addedAt: string;
+}
+
 interface SoftwareItem {
   id: string;
   name: string;
@@ -87,7 +94,94 @@ const Software: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [cartMessage, setCartMessage] = useState<string>("");
   const navigate = useNavigate();
+
+  const addToCart = async (product: Product, plan: Plan) => {
+    const userToken = localStorage.getItem("userToken");
+
+    // If user is logged in, call API
+    if (userToken) {
+      try {
+        console.log("Adding to cart with token:", userToken.substring(0, 20) + "...");
+        console.log("Plan ID:", plan.id);
+        
+        const response = await fetch(API_ENDPOINTS.CART, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${userToken}`,
+          },
+          body: JSON.stringify({
+            software_plan_id: plan.id,
+            quantity: 1,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error("API Error:", data);
+          throw new Error(data?.message || "Failed to add to cart");
+        }
+
+        console.log("Successfully added to cart:", data);
+
+        // Show success message
+        setCartMessage(`${product.name} - ${plan.plan_name} added to cart!`);
+        setTimeout(() => setCartMessage(""), 3000);
+
+        // Update cart count in navbar
+        window.dispatchEvent(new Event("cartUpdated"));
+        
+        return;
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+        
+        // If it's an authentication error, suggest re-login
+        if (error instanceof Error && error.message.includes("user_id")) {
+          setCartMessage("Session expired. Please log in again.");
+        } else {
+          setCartMessage("Failed to add to cart. Please try again.");
+        }
+        setTimeout(() => setCartMessage(""), 3000);
+        return;
+      }
+    }
+
+    // If user is not logged in, use localStorage
+    const existingCart = localStorage.getItem("cart");
+    let cart: CartItem[] = existingCart ? JSON.parse(existingCart) : [];
+
+    // Check if item already exists in cart
+    const existingItemIndex = cart.findIndex(
+      (item) => item.product.id === product.id && item.plan.id === plan.id
+    );
+
+    if (existingItemIndex > -1) {
+      // Increment quantity if item exists
+      cart[existingItemIndex].quantity += 1;
+    } else {
+      // Add new item to cart
+      const newItem: CartItem = {
+        product,
+        plan,
+        quantity: 1,
+        addedAt: new Date().toISOString(),
+      };
+      cart.push(newItem);
+    }
+
+    // Save to localStorage
+    localStorage.setItem("cart", JSON.stringify(cart));
+
+    // Update cart count in navbar (trigger re-render)
+    window.dispatchEvent(new Event("cartUpdated"));
+
+    // Show success message
+    setCartMessage(`${product.name} - ${plan.plan_name} added to cart!`);
+    setTimeout(() => setCartMessage(""), 3000);
+  };
 
   const handleBuyNow = (product: Product, plan: Plan) => {
     // Navigate to checkout with product and plan data
@@ -244,6 +338,16 @@ const Software: React.FC = () => {
               </button>
             </div>
 
+            {/* Cart Success Message */}
+            {cartMessage && (
+              <div className="mx-8 mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-green-700 text-sm flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                {cartMessage}
+              </div>
+            )}
+
             {/* Modal Content - Scrollable */}
             <div className="px-8 py-6 overflow-y-auto flex-1">
               {loadingProducts ? (
@@ -319,12 +423,20 @@ const Software: React.FC = () => {
                                 </p>
                               </div>
                             </div>
-                            <button 
-                              onClick={() => handleBuyNow(product, plan)}
-                              className="w-full bg-[#7B5DE8] text-white py-2 rounded font-semibold text-sm hover:bg-[#6A4BC4] transition-all"
-                            >
-                              Buy Now
-                            </button>
+                            <div className="space-y-2">
+                              <button 
+                                onClick={() => handleBuyNow(product, plan)}
+                                className="w-full bg-[#7B5DE8] text-white py-2 rounded font-semibold text-sm hover:bg-[#6A4BC4] transition-all"
+                              >
+                                Buy Now
+                              </button>
+                              <button 
+                                onClick={() => addToCart(product, plan)}
+                                className="w-full bg-white border-2 border-[#7B5DE8] text-[#7B5DE8] py-2 rounded font-semibold text-sm hover:bg-[#7B5DE8] hover:text-white transition-all"
+                              >
+                                Add to Cart
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>

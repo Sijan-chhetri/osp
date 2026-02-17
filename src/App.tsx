@@ -7,9 +7,16 @@ import Software from './pages/osp/Software'
 import Contact from './pages/osp/Contact'
 import Activationkey from './pages/osp/Activationkey'
 import Checkout from './pages/osp/Checkout'
+import UserLogin from './pages/osp/UserLogin'
+import Register from './pages/osp/Register'
+import UserProfile from './pages/osp/UserProfile'
+import Cart from './pages/osp/Cart'
 import EgHero from './pages/eg/eghero'
 import EgProduct from './pages/eg/egproduct'
 import EgFooter from './components/eg/egFooter'
+import CartridgeDetail from './pages/eg/CartridgeDetail'
+import CartridgeCart from './pages/eg/CartridgeCart'
+import CartridgeCheckout from './pages/eg/CartridgeCheckout'
 
 import AdminRoute from "./components/AdminRoute.tsx";
 import AdminLayout from "./admin/layouts/AdminLayout.tsx";
@@ -24,6 +31,18 @@ import SoftwarePlanList from "./admin/pages/softwarePlanList.tsx";
 import SoftwarePlanCreate from "./admin/pages/softwarePlanCreate.tsx";
 import AdminProfile from "./admin/pages/adminProfile.tsx";
 import Login from "./pages/osp/Login.tsx";
+
+// Cartridge Management Pages
+import CartridgeBrandList from "./admin/pages/cartridgeBrandList.tsx";
+import CartridgeBrandCreate from "./admin/pages/cartridgeBrandCreate.tsx";
+import CartridgeBrandEdit from "./admin/pages/cartridgeBrandEdit.tsx";
+import CartridgeCategoryList from "./admin/pages/cartridgeCategoryList.tsx";
+import CartridgeCategoryCreate from "./admin/pages/cartridgeCategoryCreate.tsx";
+import CartridgeCategoryEdit from "./admin/pages/cartridgeCategoryEdit.tsx";
+import CartridgeProductList from "./admin/pages/cartridgeProductList.tsx";
+import CartridgeProductCreate from "./admin/pages/cartridgeProductCreate.tsx";
+import CartridgeProductEdit from "./admin/pages/cartridgeProductEdit.tsx";
+import CartridgeQRList from "./admin/pages/cartridgeQRList.tsx";
 
 
 function App() {
@@ -57,6 +76,14 @@ function App() {
         />
         {/* OSP Checkout Route */}
         <Route path="/checkout" element={<Checkout />} />
+        {/* User Login Route */}
+        <Route path="/user-login" element={<UserLogin />} />
+        {/* Register Route */}
+        <Route path="/register" element={<Register />} />
+        {/* User Profile Route */}
+        <Route path="/profile" element={<UserProfile />} />
+        {/* Cart Route */}
+        <Route path="/cart" element={<Cart />} />
         {/* EG Cartridge Page Route */}
         <Route
           path="/eg"
@@ -68,6 +95,12 @@ function App() {
             </>
           }
         />
+        {/* EG Cartridge Detail Route */}
+        <Route path="/eg/cartridge/:id" element={<CartridgeDetail />} />
+        {/* EG Cart Route */}
+        <Route path="/eg/cart" element={<CartridgeCart />} />
+        {/* EG Checkout Route */}
+        <Route path="/eg/checkout" element={<CartridgeCheckout />} />
 
         <Route path="/login" element={<Login />} />
 
@@ -112,6 +145,29 @@ function App() {
           <Route path="plans">
             <Route index element={<SoftwarePlanList />} />
             <Route path="softwarePlanCreate" element={<SoftwarePlanCreate />} />
+          </Route>
+
+          {/* Cartridge Management Routes */}
+          <Route path="cartridge">
+            <Route path="brands">
+              <Route index element={<CartridgeBrandList />} />
+              <Route path="create" element={<CartridgeBrandCreate />} />
+              <Route path="edit/:id" element={<CartridgeBrandEdit />} />
+            </Route>
+
+            <Route path="categories">
+              <Route index element={<CartridgeCategoryList />} />
+              <Route path="create" element={<CartridgeCategoryCreate />} />
+              <Route path="edit/:id" element={<CartridgeCategoryEdit />} />
+            </Route>
+
+            <Route path="products">
+              <Route index element={<CartridgeProductList />} />
+              <Route path="create" element={<CartridgeProductCreate />} />
+              <Route path="edit/:id" element={<CartridgeProductEdit />} />
+            </Route>
+
+            <Route path="qr-codes" element={<CartridgeQRList />} />
           </Route>
 
           <Route path="adminProfile" element={<AdminProfile />} />
