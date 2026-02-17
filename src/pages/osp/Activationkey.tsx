@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import Footer from "../../components/osp/Footer";
 
 const Activationkey: React.FC = () => {
   const [formData, setFormData] = useState({

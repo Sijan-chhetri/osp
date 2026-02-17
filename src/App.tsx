@@ -10,6 +10,14 @@ import EgHero from './pages/eg/eghero'
 import EgProduct from './pages/eg/egproduct'
 import EgFooter from './components/eg/egFooter'
 
+import AdminRoute from "./components/AdminRoute.tsx";
+import AdminLayout from "./admin/layouts/AdminLayout.tsx";
+import Dashboard from "./admin/pages/dashboard.tsx";
+import SoftwareCategories from "./admin/pages/softwareCategoryList.tsx";
+import SoftwareCategoryCreate from "./admin/pages/softwareCategoryCreate.tsx";
+import Login from "./pages/osp/Login.tsx";
+
+
 function App() {
   return (
     <Router>
@@ -28,30 +36,52 @@ function App() {
           }
         />
         {/* OSP Activation Key Route */}
-        <Route 
-          path="/activation" 
+        <Route
+          path="/activation"
           element={
             <div className="min-h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-white">
               <Navbar />
               <Activationkey />
               <Footer />
             </div>
-          } 
+          }
         />
         {/* EG Cartridge Page Route */}
-        <Route 
-          path="/eg" 
+        <Route
+          path="/eg"
           element={
             <>
               <EgHero />
               <EgProduct />
               <EgFooter />
             </>
-          } 
+          }
         />
+
+        <Route path="/login" element={<Login />} />
+
+        {/* =====================
+        Admin Routes (Nested)
+    ===================== */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminLayout />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
+
+          <Route path="category">
+            <Route index element={<SoftwareCategories />} />
+            <Route path="softwareCreate" element={<SoftwareCategoryCreate />} />
+          </Route>
+        </Route>
       </Routes>
     </Router>
-  )
+  );
 }
 
 export default App

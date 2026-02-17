@@ -120,17 +120,21 @@ const Software: React.FC = () => {
   return (
     <>
       {/* Software Section */}
-      <section id="products" className="relative w-full bg-white flex flex-col items-center py-20 px-4">
+      <section
+        id="products"
+        className="relative w-full bg-white flex flex-col items-center py-20 px-4"
+      >
         {/* Navbar */}
         <Navbar />
 
         {/* Header */}
-        <div className="text-center mb-16 px-6 pt-20">
+        <div className="text-center mb-16 px-6 pt-8">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-            Our <span className="text-[#7B5DE8]">Software Products</span>
+            Our <span className="text-[#6E4294]">Software Products</span>
           </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-            Browse our extensive collection of genuine software solutions at the best prices in Nepal.
+          <p className="text-[#727272] max-w-2xl mx-auto text-lg">
+            Browse our extensive collection of genuine software solutions at the
+            best prices in Nepal.
           </p>
         </div>
 
@@ -164,7 +168,8 @@ const Software: React.FC = () => {
         id="how-it-works"
         className="relative w-full flex flex-col items-center py-20 px-4"
         style={{
-          background: "linear-gradient(to bottom, #482072 0%, #482072 30%, #ffffff 100%)",
+          background:
+            "linear-gradient(to bottom, #482072 0%, #482072 30%, #ffffff 100%)",
         }}
       >
         {/* Header */}
@@ -173,7 +178,8 @@ const Software: React.FC = () => {
             Get Your Software in 3 Simple Steps
           </h1>
           <p className="text-white/80 max-w-2xl mx-auto text-lg">
-            Browse our extensive collection of genuine software solutions at the best prices in Nepal.
+            Browse our extensive collection of genuine software solutions at the
+            best prices in Nepal.
           </p>
         </div>
 
