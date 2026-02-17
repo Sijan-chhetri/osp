@@ -38,7 +38,7 @@ const Navbar: React.FC = () => {
       <div
         className={`w-[70%] bg-white/90 backdrop-blur-md rounded-full px-5 py-2 flex items-center shadow-lg shadow-white/50 mt-[43px] transition-all duration-300 ${
           isScrolling
-            ? ""
+            ? "border-2 border-[#7B5DE8]"
             : "border-2 border-transparent"
         }`}
       >

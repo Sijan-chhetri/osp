@@ -6,6 +6,7 @@ import Hero from './pages/osp/Hero'
 import Software from './pages/osp/Software'
 import Contact from './pages/osp/Contact'
 import Activationkey from './pages/osp/Activationkey'
+import Checkout from './pages/osp/Checkout'
 import EgHero from './pages/eg/eghero'
 import EgProduct from './pages/eg/egproduct'
 import EgFooter from './components/eg/egFooter'
@@ -46,6 +47,8 @@ function App() {
             </div>
           }
         />
+        {/* OSP Checkout Route */}
+        <Route path="/checkout" element={<Checkout />} />
         {/* EG Cartridge Page Route */}
         <Route
           path="/eg"
