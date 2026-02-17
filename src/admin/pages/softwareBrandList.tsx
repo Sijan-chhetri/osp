@@ -1,3 +1,4 @@
+// src/admin/pages/SoftwareBrands.tsx
 import { useEffect, useMemo, useState } from "react";
 import type { FC } from "react";
 import {
@@ -9,11 +10,9 @@ import toast from "react-hot-toast";
 import { API } from "../../config/api.ts";
 import { useNavigate } from "react-router-dom";
 
-
-
 /* ================= TYPES ================= */
 
-export type SoftwareCategoryRow = {
+export type SoftwareBrandRow = {
   id: string;
   name: string;
   is_active: boolean;
@@ -21,11 +20,21 @@ export type SoftwareCategoryRow = {
   updated_at: string;
 };
 
+type ApiErrorResponse = {
+  message?: string;
+};
+
+const getErrorMessage = (err: unknown): string => {
+  if (err instanceof Error) return err.message;
+  return "Something went wrong";
+};
+
 /* ================= COMPONENT ================= */
 
-const SoftwareCategories: FC = () => {
+const SoftwareBrands: FC = () => {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<SoftwareCategoryRow[]>([]);
+
+  const [brands, setBrands] = useState<SoftwareBrandRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
@@ -34,79 +43,66 @@ const SoftwareCategories: FC = () => {
   const ITEMS_PER_PAGE = 5;
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [editingCategory, setEditingCategory] =
-    useState<SoftwareCategoryRow | null>(null);
-
+  const [editingBrand, setEditingBrand] = useState<SoftwareBrandRow | null>(
+    null,
+  );
   const [editName, setEditName] = useState("");
   const [editActive, setEditActive] = useState(true);
 
-  const [deleteTarget, setDeleteTarget] = useState<SoftwareCategoryRow | null>(
+  const [deleteTarget, setDeleteTarget] = useState<SoftwareBrandRow | null>(
     null,
   );
 
-  /* -------- Fetch Categories From API -------- */
+  /* -------- Fetch Brands From API -------- */
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchBrands = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          throw new Error("You are not authenticated.");
-        }
+        const res = await fetch(API.BRANDS); // ✅ public route, no token required per your router
+        if (!res.ok) throw new Error("Failed to fetch brands");
 
-        const res = await fetch(API.CATEGORIES, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) {
-          throw new Error("Failed to fetch categories");
-        }
-
-        const data: SoftwareCategoryRow[] = await res.json();
-
-        setCategories(data);
+        const data: SoftwareBrandRow[] = await res.json();
+        setBrands(data);
       } catch (err: unknown) {
-        const message =
-          err instanceof Error ? err.message : "Something went wrong";
-        toast.error(message);
+        toast.error(getErrorMessage(err));
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCategories();
+    fetchBrands();
   }, []);
 
   /* -------- Filter Logic -------- */
 
-  const filteredCategories = useMemo(() => {
-    return categories.filter((cat) => {
-      const matchSearch = cat.name.toLowerCase().includes(search.toLowerCase());
+  const filteredBrands = useMemo(() => {
+    return brands.filter((b) => {
+      const matchSearch = b.name.toLowerCase().includes(search.toLowerCase());
 
       const matchStatus =
         status === "all"
           ? true
           : status === "active"
-            ? cat.is_active
-            : !cat.is_active;
+            ? b.is_active
+            : !b.is_active;
 
       return matchSearch && matchStatus;
     });
-  }, [categories, search, status]);
+  }, [brands, search, status]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [search, status]);
 
-  const totalPages = Math.ceil(filteredCategories.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredBrands.length / ITEMS_PER_PAGE);
 
-  const paginatedCategories = useMemo(() => {
+  const paginatedBrands = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
-    return filteredCategories.slice(start, end);
-  }, [filteredCategories, currentPage]);
+    return filteredBrands.slice(start, end);
+  }, [filteredBrands, currentPage]);
+
+  /* -------- Delete -------- */
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -115,79 +111,92 @@ const SoftwareCategories: FC = () => {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("You are not authenticated.");
 
-      const res = await fetch(`${API.CATEGORIES}/${deleteTarget.id}`, {
+      const res = await fetch(`${API.BRANDS}/${deleteTarget.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const data: { message?: string } = await res.json();
+      const data: ApiErrorResponse = await res.json();
 
       if (!res.ok) {
         throw new Error(data.message || "Delete failed");
       }
 
-      toast.success("Category deleted successfully");
+      toast.success(data.message || "Brand deleted successfully");
 
-      // remove from state
-      setCategories((prev) => prev.filter((c) => c.id !== deleteTarget.id));
-
+      setBrands((prev) => prev.filter((b) => b.id !== deleteTarget.id));
       setDeleteTarget(null);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong";
-      toast.error(message);
+      toast.error(getErrorMessage(err));
     }
   };
 
+  /* -------- Update -------- */
 
   const handleUpdate = async () => {
-    if (!editingCategory) return;
+    if (!editingBrand) return;
 
     try {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("You are not authenticated.");
 
-      const res = await fetch(`${API.CATEGORIES}/${editingCategory.id}`, {
+      const payload = {
+        name: editName.trim(),
+        is_active: editActive,
+      };
+
+      if (!payload.name) {
+        toast.error("Brand name is required");
+        return;
+      }
+
+      const res = await fetch(`${API.BRANDS}/${editingBrand.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name: editName.trim(),
-          is_active: editActive,
-        }),
+        body: JSON.stringify(payload),
       });
 
-      const data: {
-        message?: string;
-        data?: SoftwareCategoryRow;
-      } = await res.json();
+      const data: ApiErrorResponse & { data?: SoftwareBrandRow } =
+        await res.json();
 
       if (!res.ok) {
         throw new Error(data.message || "Update failed");
       }
 
-      toast.success(data.message || "Category updated successfully");
+      toast.success(data.message || "Brand updated successfully");
 
       // update state locally
-      setCategories((prev) =>
-        prev.map((c) => (c.id === editingCategory.id ? data.data! : c)),
-      );
+      if (data.data) {
+        setBrands((prev) =>
+          prev.map((b) => (b.id === editingBrand.id ? data.data! : b)),
+        );
+      } else {
+        // fallback: patch locally if API didn't return updated row
+        setBrands((prev) =>
+          prev.map((b) =>
+            b.id === editingBrand.id
+              ? { ...b, name: payload.name, is_active: payload.is_active }
+              : b,
+          ),
+        );
+      }
 
-      setEditingCategory(null);
+      setEditingBrand(null);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong";
-      toast.error(message);
+      toast.error(getErrorMessage(err));
     }
   };
 
+  /* -------- Add -------- */
 
   const handleAdd = () => {
-    navigate("/admin/category/softwareCategoryCreate");
+    // go to your create page route (change if different)
+    navigate("/admin/brands/softwareBrandCreate");
   };
 
   return (
@@ -197,10 +206,10 @@ const SoftwareCategories: FC = () => {
         {/* LEFT */}
         <div>
           <h1 className="text-2xl font-semibold text-[#6E4294]">
-            Software Categories
+            Software Brands
           </h1>
           <p className="text-sm text-[#482072]">
-            Manage and organize software categories.
+            Manage and organize software brands.
           </p>
         </div>
 
@@ -211,7 +220,7 @@ const SoftwareCategories: FC = () => {
                 bg-[#6E4294] text-white text-sm font-medium
                 hover:bg-[#6E4294]/90 active:scale-95 transition"
         >
-          + Add Category
+          + Add Brand
         </button>
       </div>
 
@@ -222,7 +231,7 @@ const SoftwareCategories: FC = () => {
           <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search category..."
+            placeholder="Search brand..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#6E4294]"
@@ -259,35 +268,37 @@ const SoftwareCategories: FC = () => {
             {loading && (
               <tr>
                 <td colSpan={4} className="px-5 py-6 text-center">
-                  Loading categories...
+                  Loading brands...
                 </td>
               </tr>
             )}
 
-            {!loading && filteredCategories.length === 0 && (
+            {!loading && filteredBrands.length === 0 && (
               <tr>
                 <td
                   colSpan={4}
                   className="px-5 py-6 text-center text-brownSoft"
                 >
-                  No categories found.
+                  No brands found.
                 </td>
               </tr>
             )}
 
-            {paginatedCategories.map((cat) => (
+            {paginatedBrands.map((brand) => (
               <tr
-                key={cat.id}
+                key={brand.id}
                 className="border-t border-slate-100 hover:bg-slate-50 transition"
               >
-                <td className="px-5 py-4 font-medium text-brown">{cat.name}</td>
+                <td className="px-5 py-4 font-medium text-brown">
+                  {brand.name}
+                </td>
 
                 <td className="px-5 py-4">
-                  <StatusBadge active={cat.is_active} />
+                  <StatusBadge active={brand.is_active} />
                 </td>
 
                 <td className="px-5 py-4 text-brownSoft">
-                  {new Date(cat.created_at).toLocaleDateString()}
+                  {new Date(brand.created_at).toLocaleDateString()}
                 </td>
 
                 <td className="px-5 py-4 text-right">
@@ -295,9 +306,9 @@ const SoftwareCategories: FC = () => {
                     {/* EDIT */}
                     <button
                       onClick={() => {
-                        setEditingCategory(cat);
-                        setEditName(cat.name);
-                        setEditActive(cat.is_active);
+                        setEditingBrand(brand);
+                        setEditName(brand.name);
+                        setEditActive(brand.is_active);
                       }}
                       className="p-2 rounded-lg text-brownSoft hover:text-[#6E4294] hover:bg-[#6E4294]/10 transition"
                     >
@@ -306,7 +317,7 @@ const SoftwareCategories: FC = () => {
 
                     {/* DELETE */}
                     <button
-                      onClick={() => setDeleteTarget(cat)}
+                      onClick={() => setDeleteTarget(brand)}
                       className="p-2 rounded-lg text-brownSoft hover:text-red-600 hover:bg-red-50 transition"
                     >
                       <TrashIcon className="w-5 h-5" />
@@ -322,12 +333,12 @@ const SoftwareCategories: FC = () => {
       {/* ================= PAGINATION ================= */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-brownSoft">
-          {filteredCategories.length === 0
-            ? "Showing 0 categories"
+          {filteredBrands.length === 0
+            ? "Showing 0 brands"
             : `Showing ${(currentPage - 1) * ITEMS_PER_PAGE + 1}–${Math.min(
                 currentPage * ITEMS_PER_PAGE,
-                filteredCategories.length,
-              )} of ${filteredCategories.length} categories`}
+                filteredBrands.length,
+              )} of ${filteredBrands.length} brands`}
         </p>
 
         <div className="flex items-center gap-2">
@@ -352,18 +363,18 @@ const SoftwareCategories: FC = () => {
       </div>
 
       {/* ================= EDIT MODAL ================= */}
-      {editingCategory && (
+      {editingBrand && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center">
           {/* OVERLAY */}
           <div
             className="absolute inset-0 bg-black/50"
-            onClick={() => setEditingCategory(null)}
+            onClick={() => setEditingBrand(null)}
           />
 
           {/* MODAL */}
           <div className="relative bg-white w-full max-w-lg rounded-xl p-6 space-y-4 shadow-xl">
             <h2 className="text-lg font-semibold text-brown">
-              Edit Software Category
+              Edit Software Brand
             </h2>
 
             <div className="space-y-3">
@@ -386,7 +397,7 @@ const SoftwareCategories: FC = () => {
 
             <div className="flex justify-end gap-3 pt-4">
               <button
-                onClick={() => setEditingCategory(null)}
+                onClick={() => setEditingBrand(null)}
                 className="px-4 py-2 border rounded-lg"
               >
                 Cancel
@@ -408,7 +419,7 @@ const SoftwareCategories: FC = () => {
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
           <div className="bg-white w-full max-w-md rounded-xl p-6 space-y-4">
             <h2 className="text-lg font-semibold text-brown">
-              Delete Software Category
+              Delete Software Brand
             </h2>
 
             <p className="text-sm text-brownSoft">
@@ -440,9 +451,9 @@ const SoftwareCategories: FC = () => {
       )}
     </div>
   );
-};;
+};
 
-export default SoftwareCategories;
+export default SoftwareBrands;
 
 /* ================= SMALL COMPONENTS ================= */
 

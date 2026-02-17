@@ -15,11 +15,19 @@ import AdminLayout from "./admin/layouts/AdminLayout.tsx";
 import Dashboard from "./admin/pages/dashboard.tsx";
 import SoftwareCategories from "./admin/pages/softwareCategoryList.tsx";
 import SoftwareCategoryCreate from "./admin/pages/softwareCategoryCreate.tsx";
+import SoftwareBrands from "./admin/pages/softwareBrandList.tsx";
+import SoftwareBrandCreate from "./admin/pages/softwareBrandCreate.tsx";
+import SoftwareProducts from "./admin/pages/softwareProductList.tsx";
+import SoftwareProductCreate from "./admin/pages/softwareProductCreate.tsx";
+import SoftwarePlanList from "./admin/pages/softwarePlanList.tsx";
+import SoftwarePlanCreate from "./admin/pages/softwarePlanCreate.tsx";
+import AdminProfile from "./admin/pages/adminProfile.tsx";
 import Login from "./pages/osp/Login.tsx";
 
 
 function App() {
   return (
+    
     <Router>
       <Routes>
         {/* OSP Home Page Route */}
@@ -76,8 +84,34 @@ function App() {
 
           <Route path="category">
             <Route index element={<SoftwareCategories />} />
-            <Route path="softwareCreate" element={<SoftwareCategoryCreate />} />
+            <Route
+              path="softwareCategoryCreate"
+              element={<SoftwareCategoryCreate />}
+            />
           </Route>
+
+          <Route path="brands">
+            <Route index element={<SoftwareBrands />} />
+            <Route
+              path="softwareBrandCreate"
+              element={<SoftwareBrandCreate />}
+            />
+          </Route>
+
+          <Route path="products">
+            <Route index element={<SoftwareProducts />} />
+            <Route
+              path="softwareProductCreate"
+              element={<SoftwareProductCreate />}
+            />
+          </Route>
+
+          <Route path="plans">
+            <Route index element={<SoftwarePlanList />} />
+            <Route path="softwarePlanCreate" element={<SoftwarePlanCreate />} />
+          </Route>
+
+          <Route path="adminProfile" element={<AdminProfile />} />
         </Route>
       </Routes>
     </Router>

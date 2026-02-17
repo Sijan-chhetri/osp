@@ -1,4 +1,5 @@
-import { FC, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { FC } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BellIcon,
