@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import type { FC } from "react";
 import { API_ENDPOINTS } from "../../api/api";
 import { useNavigate, useParams } from "react-router-dom";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 interface CartridgeOrderDetail {
   order: {
@@ -37,17 +39,23 @@ interface CartridgeOrderDetail {
     cartridge_product_id: string;
     quantity: number;
     unit_price: number;
-    serial_number: string;
-    barcode_image: string;
     created_at: string;
     product_name: string;
     model_number: string;
     brand_name: string;
     category_name: string;
+    serial_numbers: string[];
+    barcodes: Array<{
+      serial_number: string;
+      customer_name: string;
+      barcode_image: string;
+    }>;
   }>;
   summary: {
     total_items: number;
-    total_quantity: number;
+    total_barcodes: number;
+    items_with_codes: number;
+    items_without_codes: number;
   };
 }
 
@@ -81,6 +89,128 @@ const CartridgeOrderDetail: FC = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const downloadBarcode = async (barcodeImage: string, _productName: string, serialNumber: string, customerName: string) => {
+    try {
+      // Create a canvas to add text to the barcode
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Load the barcode image
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      img.onload = () => {
+        // Set canvas size for flex layout (small barcode left, lengthy text right)
+        const padding = 30;
+        const barcodeMaxWidth = 200; // Small barcode width
+        const barcodeScale = Math.min(1, barcodeMaxWidth / img.width);
+        const scaledBarcodeWidth = img.width * barcodeScale;
+        const scaledBarcodeHeight = img.height * barcodeScale;
+        
+        const barcodeWidth = scaledBarcodeWidth + padding * 2;
+        const textWidth = 500; // More space for text
+        canvas.width = barcodeWidth + textWidth;
+        canvas.height = 220; // Reduced height since no product name
+
+        // Fill white background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw border
+        ctx.strokeStyle = '#e5e7eb';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, canvas.width - 2, canvas.height - 2);
+
+        // Draw small barcode on the left (centered vertically)
+        const barcodeX = (barcodeWidth - scaledBarcodeWidth) / 2;
+        const barcodeY = (canvas.height - scaledBarcodeHeight) / 2;
+        ctx.drawImage(img, barcodeX, barcodeY, scaledBarcodeWidth, scaledBarcodeHeight);
+
+        // Draw vertical divider line
+        ctx.strokeStyle = '#d1d5db';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(barcodeWidth, padding);
+        ctx.lineTo(barcodeWidth, canvas.height - padding);
+        ctx.stroke();
+
+        // Text section on the right (more space)
+        const textX = barcodeWidth + 40;
+        let textY = 60;
+
+        ctx.fillStyle = '#000000';
+        ctx.textAlign = 'left';
+        
+        // Serial number label
+        ctx.font = '16px Arial';
+        ctx.fillStyle = '#6b7280';
+        ctx.fillText('Serial Number:', textX, textY);
+        textY += 30;
+        
+        // Serial number value (wrap if needed)
+        ctx.font = 'bold 18px monospace';
+        ctx.fillStyle = '#000000';
+        const maxTextWidth = textWidth - 80;
+        const words = serialNumber.match(/.{1,30}/g) || [serialNumber];
+        words.forEach(word => {
+          ctx.fillText(word, textX, textY);
+          textY += 28;
+        });
+        
+        textY += 15;
+        
+        // Owner label
+        ctx.font = '16px Arial';
+        ctx.fillStyle = '#6b7280';
+        ctx.fillText('This belongs to:', textX, textY);
+        textY += 30;
+        
+        // Owner name (bold, highlighted, larger)
+        ctx.font = 'bold 22px Arial';
+        ctx.fillStyle = '#6E4294';
+        
+        // Wrap customer name if too long
+        const nameWords = customerName.split(' ');
+        let currentLine = '';
+        nameWords.forEach((word, index) => {
+          const testLine = currentLine + word + ' ';
+          const metrics = ctx.measureText(testLine);
+          if (metrics.width > maxTextWidth && index > 0) {
+            ctx.fillText(currentLine.trim(), textX, textY);
+            textY += 28;
+            currentLine = word + ' ';
+          } else {
+            currentLine = testLine;
+          }
+        });
+        ctx.fillText(currentLine.trim(), textX, textY);
+
+        // Download
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `barcode-${serialNumber}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast.success('Barcode downloaded successfully');
+          }
+        });
+      };
+
+      img.onerror = () => {
+        toast.error('Failed to load barcode image');
+      };
+
+      img.src = barcodeImage;
+    } catch (err) {
+      console.error('Download error:', err);
+      toast.error('Failed to download barcode');
     }
   };
 
@@ -213,31 +343,53 @@ const CartridgeOrderDetail: FC = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-brownSoft">Unit Price</p>
-                      <p className="font-bold text-brown">Rs. {item.unit_price.toLocaleString()}</p>
+                      <p className="font-bold text-brown">Rs. {parseFloat(item.unit_price.toString()).toLocaleString()}</p>
                       <p className="text-xs text-brownSoft mt-1">Subtotal</p>
-                      <p className="font-semibold text-[#6E4294]">Rs. {(item.unit_price * item.quantity).toLocaleString()}</p>
+                      <p className="font-semibold text-[#6E4294]">Rs. {(parseFloat(item.unit_price.toString()) * item.quantity).toLocaleString()}</p>
                     </div>
                   </div>
                   
-                  {/* Serial Number and Barcode */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pt-3 border-t">
-                    <div className="bg-slate-50 p-3 rounded">
-                      <p className="text-xs text-brownSoft mb-1">Serial Number</p>
-                      <p className="font-mono text-sm text-brown break-all">{item.serial_number}</p>
+                  {/* Barcodes Section */}
+                  {item.barcodes && item.barcodes.length > 0 && (
+                    <div className="mt-3 pt-3 border-t">
+                      <p className="text-sm font-semibold text-brown mb-3">Barcodes ({item.barcodes.length})</p>
+                      <div className="space-y-3">
+                        {item.barcodes.map((barcode, idx) => (
+                          <div key={idx} className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50 p-3 rounded">
+                            <div>
+                              <p className="text-xs text-brownSoft mb-1">Serial Number</p>
+                              <p className="font-mono text-sm text-brown break-all">{barcode.serial_number}</p>
+                              <p className="text-xs text-brownSoft mt-2 mb-1">Customer</p>
+                              <p className="text-sm text-brown font-medium">{barcode.customer_name}</p>
+                            </div>
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-xs text-brownSoft">Barcode Image</p>
+                                {barcode.barcode_image && (
+                                  <button
+                                    onClick={() => downloadBarcode(barcode.barcode_image, item.product_name, barcode.serial_number, barcode.customer_name)}
+                                    className="p-1 rounded hover:bg-[#6E4294]/10 text-[#6E4294] transition"
+                                    title="Download Barcode"
+                                  >
+                                    <ArrowDownTrayIcon className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                              {barcode.barcode_image ? (
+                                <img 
+                                  src={barcode.barcode_image} 
+                                  alt={`Barcode for ${barcode.serial_number}`}
+                                  className="w-full h-auto max-h-16 object-contain bg-white p-1 rounded"
+                                />
+                              ) : (
+                                <p className="text-xs text-gray-400">No barcode available</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="bg-slate-50 p-3 rounded">
-                      <p className="text-xs text-brownSoft mb-2">Barcode</p>
-                      {item.barcode_image ? (
-                        <img 
-                          src={item.barcode_image} 
-                          alt={`Barcode for ${item.product_name}`}
-                          className="w-full h-auto max-h-16 object-contain"
-                        />
-                      ) : (
-                        <p className="text-xs text-gray-400">No barcode available</p>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -280,7 +432,7 @@ const CartridgeOrderDetail: FC = () => {
               )}
               <div>
                 <p className="text-xs text-brownSoft mb-1">Amount</p>
-                <p className="text-2xl font-bold text-[#6E4294]">Rs. {payment.amount.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-[#6E4294]">Rs. {parseFloat(payment.amount.toString()).toLocaleString()}</p>
               </div>
               {payment.paid_at && (
                 <div>
@@ -300,13 +452,21 @@ const CartridgeOrderDetail: FC = () => {
                 <span className="font-semibold">{summary.total_items}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-white/80">Total Quantity</span>
-                <span className="font-semibold">{summary.total_quantity}</span>
+                <span className="text-white/80">Total Barcodes</span>
+                <span className="font-semibold">{summary.total_barcodes}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/80">With Codes</span>
+                <span className="font-semibold">{summary.items_with_codes}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/80">Without Codes</span>
+                <span className="font-semibold">{summary.items_without_codes}</span>
               </div>
               <div className="border-t border-white/20 pt-3 mt-3">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold">Total Amount</span>
-                  <span className="text-2xl font-bold">Rs. {order.total.toLocaleString()}</span>
+                  <span className="text-2xl font-bold">Rs. {parseFloat(order.total.toString()).toLocaleString()}</span>
                 </div>
               </div>
             </div>

@@ -26,7 +26,7 @@ interface User {
   role?: string;
 }
 
-type DropdownKey = "categories" | "brands" | "softwares" | "plans" | "cartridgeBrands" | "cartridgeCategories" | "cartridgeProducts" | null;
+type DropdownKey = "categories" | "brands" | "softwares" | "plans" | "cartridgeBrands" | "cartridgeCategories" | "cartridgeProducts" | "distributors" | null;
 
 const AdminSidebar: FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
   const [openDropdown, setOpenDropdown] = useState<DropdownKey>(null);
@@ -288,6 +288,46 @@ const AdminSidebar: FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
           <ShoppingBagIcon className="w-5 h-5" />
           Software Orders
         </NavLink>
+
+        {/* ================= DISTRIBUTORS DROPDOWN ================= */}
+        <button
+          type="button"
+          onClick={() => toggle("distributors")}
+          className={`${baseLink} ${inactiveLink} w-full justify-between`}
+        >
+          <div className="flex items-center gap-3">
+            <UsersIcon className="w-5 h-5" />
+            Distributors
+          </div>
+          <ChevronDownIcon
+            className={`w-4 h-4 transition-transform ${
+              openDropdown === "distributors" ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+
+        {openDropdown === "distributors" && (
+          <div className="ml-8 mt-1 space-y-1">
+            <NavLink
+              to="/admin/distributors/register"
+              onClick={handleNavClick}
+              className={({ isActive }) => subLink(isActive)}
+            >
+              <PlusCircleIcon className="w-4 h-4" />
+              Register Distributor
+            </NavLink>
+
+            <NavLink
+              to="/admin/distributors"
+              end
+              onClick={handleNavClick}
+              className={({ isActive }) => subLink(isActive)}
+            >
+              <ListBulletIcon className="w-4 h-4" />
+              Distributor List
+            </NavLink>
+          </div>
+        )}
 
         {/* ================= CARTRIDGE SECTION ================= */}
         <div className="pt-4 mt-4 border-t border-slate-200">

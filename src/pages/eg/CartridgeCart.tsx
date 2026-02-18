@@ -4,6 +4,7 @@ import EgNavbar from "../../components/eg/egNavbar";
 import EgFooter from "../../components/eg/egFooter";
 import { API_ENDPOINTS } from "../../api/api";
 import toast from "react-hot-toast";
+import { getAuthToken, isAuthenticated } from "../../utils/auth";
 
 interface CartItem {
   id: string;
@@ -37,13 +38,12 @@ const CartridgeCart: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("userToken");
-    setIsLoggedIn(!!token);
+    setIsLoggedIn(isAuthenticated());
     loadCart();
   }, []);
 
   const loadCart = async () => {
-    const token = localStorage.getItem("userToken");
+    const token = getAuthToken();
 
     if (token) {
       // Logged-in user: Fetch from API
@@ -106,7 +106,7 @@ const CartridgeCart: React.FC = () => {
   const handleQuantityChange = async (id: string, newQuantity: number) => {
     if (newQuantity < 1) return;
 
-    const token = localStorage.getItem("userToken");
+    const token = getAuthToken();
 
     if (token) {
       // Logged-in user: Update via API
@@ -143,7 +143,7 @@ const CartridgeCart: React.FC = () => {
   };
 
   const handleRemoveItem = async (id: string) => {
-    const token = localStorage.getItem("userToken");
+    const token = getAuthToken();
 
     if (token) {
       // Logged-in user: Remove via API

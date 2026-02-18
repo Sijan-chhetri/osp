@@ -6,6 +6,7 @@ export const API_ENDPOINTS = {
   AUTH_LOGIN: `${API_BASE_URL}/auth/login`,
   AUTH_REGISTER: `${API_BASE_URL}/auth/register`,
   AUTH_PROFILE: `${API_BASE_URL}/auth/profile`,
+  GET_USERS: `${API_BASE_URL}/auth/users`,
   CART: `${API_BASE_URL}/cart`,
   CART_ITEM: (itemId: string) => `${API_BASE_URL}/cart/${itemId}`,
   ORDER_FROM_CART: `${API_BASE_URL}/orders/from-cart`,
@@ -40,4 +41,13 @@ export const API_ENDPOINTS = {
   CARTRIDGE_ORDER_FROM_CART: `${API_BASE_URL}/cartridge/orders/from-cart`,
   CARTRIDGE_ORDERS_ALL: `${API_BASE_URL}/cartridge/orders/admin/all`,
   CARTRIDGE_ORDER_DETAILS: (orderId: string) => `${API_BASE_URL}/cartridge/orders/admin/details/${orderId}`,
+  
+  // Distributor Management
+  REGISTER_DISTRIBUTOR: `${API_BASE_URL}/auth/register-distributor`,
+  
+  // Software Brand Images
+  SOFTWARE_BRAND_IMAGE: (path: string) => `${API_BASE_URL}/software/brands/image?path=${encodeURIComponent(path)}`,
+  
+  // Activation Key
+  ACTIVATION_REQUEST_KEY: `${API_BASE_URL}/activation/request-key`,
 };

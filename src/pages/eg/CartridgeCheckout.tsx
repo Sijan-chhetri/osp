@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import EgNavbar from "../../components/eg/egNavbar";
 import EgFooter from "../../components/eg/egFooter";
 import { API_ENDPOINTS } from "../../api/api";
+import { getAuthToken } from "../../utils/auth";
 
 interface CartItem {
   id: string;
@@ -51,7 +52,7 @@ const CartridgeCheckout: React.FC = () => {
   // Auto-fill form if user is logged in
   useEffect(() => {
     const fetchUserProfile = async () => {
-      const token = localStorage.getItem("userToken");
+      const token = getAuthToken();
       
       if (token) {
         try {
@@ -144,7 +145,7 @@ const CartridgeCheckout: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem("userToken");
+      const token = getAuthToken();
       
       // Map payment methods to API format
       const paymentMethodMap: Record<string, string> = {

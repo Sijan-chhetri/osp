@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { API_ENDPOINTS } from "../../api/api";
+import { getAuthToken, isAuthenticated, logout } from "../../utils/auth";
 
 const EgNavbar: React.FC = () => {
   const navigate = useNavigate();
@@ -11,14 +12,13 @@ const EgNavbar: React.FC = () => {
 
   // Check if user is logged in
   useEffect(() => {
-    const token = localStorage.getItem("userToken");
-    setIsLoggedIn(!!token);
+    setIsLoggedIn(isAuthenticated());
   }, [location]);
 
   // Update cart count
   useEffect(() => {
     const updateCartCount = async () => {
-      const token = localStorage.getItem("userToken");
+      const token = getAuthToken();
 
       if (token) {
         // Logged-in user: Fetch from API
@@ -70,8 +70,7 @@ const EgNavbar: React.FC = () => {
   }, [location]);
 
   const handleLogout = () => {
-    localStorage.removeItem("userToken");
-    localStorage.removeItem("user");
+    logout();
     localStorage.removeItem("cartridgeCart"); // Clear guest cart on logout
     setIsLoggedIn(false);
     setShowUserMenu(false);

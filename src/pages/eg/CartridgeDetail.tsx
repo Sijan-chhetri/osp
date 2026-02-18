@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from "../../api/api";
 import EgNavbar from "../../components/eg/egNavbar";
 import EgFooter from "../../components/eg/egFooter";
 import toast from "react-hot-toast";
+import { getAuthToken } from "../../utils/auth";
 
 interface CartridgeProduct {
   id: string;
@@ -55,7 +56,7 @@ const CartridgeDetail: React.FC = () => {
   const handleAddToCart = async () => {
     if (!product) return;
 
-    const token = localStorage.getItem("userToken");
+    const token = getAuthToken();
 
     if (token) {
       // Logged-in user: Use API

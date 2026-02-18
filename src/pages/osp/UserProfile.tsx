@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/osp/Navbar";
 import Footer from "../../components/osp/Footer";
 import { API_ENDPOINTS } from "../../api/api";
+import { getAuthToken } from "../../utils/auth";
 
 interface UserProfile {
   id: string;
@@ -34,7 +35,7 @@ const UserProfile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("userToken");
+    const token = getAuthToken();
     if (!token) {
       navigate("/user-login");
       return;
@@ -44,7 +45,7 @@ const UserProfile: React.FC = () => {
 
   const fetchProfile = async () => {
     try {
-      const token = localStorage.getItem("userToken");
+      const token = getAuthToken();
       const res = await fetch(API_ENDPOINTS.AUTH_PROFILE, {
         method: "GET",
         headers: {
@@ -90,7 +91,7 @@ const UserProfile: React.FC = () => {
     setSaving(true);
 
     try {
-      const token = localStorage.getItem("userToken");
+      const token = getAuthToken();
       const res = await fetch(API_ENDPOINTS.AUTH_PROFILE, {
         method: "PUT",
         headers: {

@@ -3,6 +3,7 @@ import type { FC } from "react";
 import toast from "react-hot-toast";
 import { API_ENDPOINTS } from "../../api/api";
 import { useNavigate, useParams } from "react-router-dom";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 
 interface OrderDetail {
   order: {
@@ -84,6 +85,164 @@ const SoftwareOrderDetail: FC = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generateBarcodeImage = (barcodeValue: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject('Canvas not supported');
+        return;
+      }
+
+      // Simple barcode representation (you can use a library like JsBarcode for better results)
+      canvas.width = 300;
+      canvas.height = 100;
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.fillStyle = '#000000';
+      ctx.font = '14px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(barcodeValue, canvas.width / 2, canvas.height / 2);
+      
+      // Draw simple bars
+      const barWidth = 3;
+      for (let i = 0; i < barcodeValue.length; i++) {
+        const x = 20 + (i * (barWidth + 2));
+        const charCode = barcodeValue.charCodeAt(i);
+        const height = 30 + (charCode % 20);
+        ctx.fillRect(x, 20, barWidth, height);
+      }
+
+      resolve(canvas.toDataURL('image/png'));
+    });
+  };
+
+  const downloadBarcode = async (barcodeValue: string, _productName: string, serialNumber: string, customerName: string) => {
+    try {
+      // Generate barcode image
+      const barcodeDataUrl = await generateBarcodeImage(barcodeValue);
+      
+      // Create a canvas to add text to the barcode
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Load the barcode image
+      const img = new Image();
+      
+      img.onload = () => {
+        // Set canvas size for flex layout (small barcode left, lengthy text right)
+        const padding = 30;
+        const barcodeMaxWidth = 200; // Small barcode width
+        const barcodeScale = Math.min(1, barcodeMaxWidth / img.width);
+        const scaledBarcodeWidth = img.width * barcodeScale;
+        const scaledBarcodeHeight = img.height * barcodeScale;
+        
+        const barcodeWidth = scaledBarcodeWidth + padding * 2;
+        const textWidth = 500; // More space for text
+        canvas.width = barcodeWidth + textWidth;
+        canvas.height = 220; // Reduced height since no product name
+
+        // Fill white background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw border
+        ctx.strokeStyle = '#e5e7eb';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, canvas.width - 2, canvas.height - 2);
+
+        // Draw small barcode on the left (centered vertically)
+        const barcodeX = (barcodeWidth - scaledBarcodeWidth) / 2;
+        const barcodeY = (canvas.height - scaledBarcodeHeight) / 2;
+        ctx.drawImage(img, barcodeX, barcodeY, scaledBarcodeWidth, scaledBarcodeHeight);
+
+        // Draw vertical divider line
+        ctx.strokeStyle = '#d1d5db';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(barcodeWidth, padding);
+        ctx.lineTo(barcodeWidth, canvas.height - padding);
+        ctx.stroke();
+
+        // Text section on the right (more space)
+        const textX = barcodeWidth + 40;
+        let textY = 60;
+
+        ctx.fillStyle = '#000000';
+        ctx.textAlign = 'left';
+        
+        // Serial number label
+        ctx.font = '16px Arial';
+        ctx.fillStyle = '#6b7280';
+        ctx.fillText('Serial Number:', textX, textY);
+        textY += 30;
+        
+        // Serial number value (wrap if needed)
+        ctx.font = 'bold 18px monospace';
+        ctx.fillStyle = '#000000';
+        const maxTextWidth = textWidth - 80;
+        const words = serialNumber.match(/.{1,30}/g) || [serialNumber];
+        words.forEach(word => {
+          ctx.fillText(word, textX, textY);
+          textY += 28;
+        });
+        
+        textY += 15;
+        
+        // Owner label
+        ctx.font = '16px Arial';
+        ctx.fillStyle = '#6b7280';
+        ctx.fillText('This belongs to:', textX, textY);
+        textY += 30;
+        
+        // Owner name (bold, highlighted, larger)
+        ctx.font = 'bold 22px Arial';
+        ctx.fillStyle = '#6E4294';
+        
+        // Wrap customer name if too long
+        const nameWords = customerName.split(' ');
+        let currentLine = '';
+        nameWords.forEach((word, index) => {
+          const testLine = currentLine + word + ' ';
+          const metrics = ctx.measureText(testLine);
+          if (metrics.width > maxTextWidth && index > 0) {
+            ctx.fillText(currentLine.trim(), textX, textY);
+            textY += 28;
+            currentLine = word + ' ';
+          } else {
+            currentLine = testLine;
+          }
+        });
+        ctx.fillText(currentLine.trim(), textX, textY);
+
+        // Download
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `barcode-${serialNumber}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast.success('Barcode downloaded successfully');
+          }
+        });
+      };
+
+      img.onerror = () => {
+        toast.error('Failed to load barcode image');
+      };
+
+      img.src = barcodeDataUrl;
+    } catch (err) {
+      console.error('Download error:', err);
+      toast.error('Failed to download barcode');
     }
   };
 
@@ -196,7 +355,7 @@ const SoftwareOrderDetail: FC = () => {
           <div className="bg-white rounded-xl border border-slate-200 p-6">
             <h2 className="text-lg font-semibold text-brown mb-4">Order Items ({summary.total_items})</h2>
             <div className="space-y-4">
-              {items.map((item, index) => (
+              {items.map((item) => (
                 <div key={item.id} className="border border-slate-200 rounded-lg p-4">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1">
@@ -220,7 +379,18 @@ const SoftwareOrderDetail: FC = () => {
                       <p className="font-mono text-xs text-brown break-all">{item.serial_number}</p>
                     </div>
                     <div className="bg-slate-50 p-2 rounded">
-                      <p className="text-xs text-brownSoft mb-1">Barcode</p>
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-xs text-brownSoft">Barcode</p>
+                        {item.barcode_value && (
+                          <button
+                            onClick={() => downloadBarcode(item.barcode_value, item.product_name, item.serial_number, order.billing_full_name)}
+                            className="p-1 rounded hover:bg-[#6E4294]/10 text-[#6E4294] transition"
+                            title="Download Barcode"
+                          >
+                            <ArrowDownTrayIcon className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                       <p className="font-mono text-xs text-brown break-all">{item.barcode_value}</p>
                     </div>
                   </div>

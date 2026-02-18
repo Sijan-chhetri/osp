@@ -11,6 +11,8 @@ import UserLogin from './pages/osp/UserLogin'
 import Register from './pages/osp/Register'
 import UserProfile from './pages/osp/UserProfile'
 import Cart from './pages/osp/Cart'
+import Services from './pages/osp/Services'
+import InkFill from './pages/osp/InkFill'
 import EgHero from './pages/eg/eghero'
 import EgProduct from './pages/eg/egproduct'
 import EgFooter from './components/eg/egFooter'
@@ -52,6 +54,10 @@ import SoftwareOrderDetail from "./admin/pages/softwareOrderDetail.tsx";
 import CartridgeOrderList from "./admin/pages/cartridgeOrderList.tsx";
 import CartridgeOrderDetail from "./admin/pages/cartridgeOrderDetail.tsx";
 
+// Distributor Pages
+import DistributorRegister from "./admin/pages/distributorRegister.tsx";
+import DistributorList from "./admin/pages/distributorList.tsx";
+
 
 function App() {
   return (
@@ -92,6 +98,10 @@ function App() {
         <Route path="/profile" element={<UserProfile />} />
         {/* Cart Route */}
         <Route path="/cart" element={<Cart />} />
+        {/* Services Route */}
+        <Route path="/services" element={<Services />} />
+        {/* Ink Fill Route */}
+        <Route path="/ink-fill" element={<InkFill />} />
         {/* EG Cartridge Page Route */}
         <Route
           path="/eg"
@@ -159,6 +169,12 @@ function App() {
           <Route path="orders">
             <Route index element={<SoftwareOrderList />} />
             <Route path=":id" element={<SoftwareOrderDetail />} />
+          </Route>
+
+          {/* Distributor Routes */}
+          <Route path="distributors">
+            <Route index element={<DistributorList />} />
+            <Route path="register" element={<DistributorRegister />} />
           </Route>
 
           {/* Cartridge Management Routes */}

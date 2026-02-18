@@ -4,6 +4,7 @@ import Navbar from "../../components/osp/Navbar";
 import WhyOSP from "../../components/osp/WhyOSP";
 import StepCard from "../../components/osp/stepcard";
 import { API_ENDPOINTS } from "../../api/api";
+import { getAuthToken, isDistributor } from "../../utils/auth";
 
 interface BrandFromAPI {
   id: string;
@@ -16,6 +17,7 @@ interface Plan {
   plan_name: string;
   duration_type: string;
   price: string;
+  special_price: string | null;
   original_price: string | null;
   features: string;
   has_discount: boolean;
@@ -66,11 +68,18 @@ const SoftwareCard: React.FC<SoftwareItem & { onSeeOptions: () => void }> = ({
   imageUrl,
   onSeeOptions 
 }) => {
+  const [imageError, setImageError] = React.useState(false);
+
   return (
     <div className="bg-white rounded-lg shadow-lg border-2 border-gray-300 p-8 flex flex-col items-center text-center hover:shadow-2xl hover:border-[#7B5DE8] transition-all duration-300">
       <div className={`${bgColor} p-4 rounded-lg mb-6 w-24 h-24 flex items-center justify-center`}>
-        {imageUrl ? (
-          <img src={imageUrl} alt={name} className="w-full h-full object-contain" />
+        {imageUrl && !imageError ? (
+          <img 
+            src={imageUrl} 
+            alt={name} 
+            className="w-full h-full object-contain"
+            onError={() => setImageError(true)}
+          />
         ) : (
           <span className={`${color} font-extrabold text-4xl`}>{name.charAt(0)}</span>
         )}
@@ -98,7 +107,7 @@ const Software: React.FC = () => {
   const navigate = useNavigate();
 
   const addToCart = async (product: Product, plan: Plan) => {
-    const userToken = localStorage.getItem("userToken");
+    const userToken = getAuthToken();
 
     // If user is logged in, call API
     if (userToken) {
@@ -234,15 +243,22 @@ const Software: React.FC = () => {
         const brands: BrandFromAPI[] = await response.json();
         
         // Map API brands to software products
-        const products: SoftwareItem[] = brands.map((brand) => ({
-          id: brand.id,
-          name: brand.name,
-          title: brand.name,
-          category: getCategoryForBrand(brand.name),
-          color: getColorForBrand(brand.name),
-          bgColor: getBgColorForBrand(brand.name),
-          imageUrl: brand.image_url,
-        }));
+        const products: SoftwareItem[] = brands.map((brand) => {
+          // Construct image URL if thumbnail_url exists
+          const imageUrl = brand.thumbnail_url 
+            ? API_ENDPOINTS.SOFTWARE_BRAND_IMAGE(brand.thumbnail_url)
+            : undefined;
+
+          return {
+            id: brand.id,
+            name: brand.name,
+            title: brand.name,
+            category: getCategoryForBrand(brand.name),
+            color: getColorForBrand(brand.name),
+            bgColor: getBgColorForBrand(brand.name),
+            imageUrl: imageUrl,
+          };
+        });
         
         setSoftwareProducts(products);
         setLoading(false);
@@ -399,46 +415,60 @@ const Software: React.FC = () => {
 
                       {/* Plans */}
                       <div className="space-y-3 mt-auto">
-                        {product.plans.map((plan) => (
-                          <div
-                            key={plan.id}
-                            className="bg-gray-50 border border-gray-200 rounded p-4"
-                          >
-                            <h4 className="font-bold text-[#482072] mb-1 text-sm">
-                              {plan.plan_name}
-                            </h4>
-                            <p className="text-xs text-gray-600 mb-2">{plan.features}</p>
-                            <div className="flex items-center justify-between mb-3">
-                              <span className="text-xs text-gray-500 capitalize bg-white px-2 py-1 rounded border border-gray-200">
-                                {plan.duration_type}
-                              </span>
-                              <div className="text-right">
-                                {plan.has_discount && plan.original_price && (
-                                  <p className="text-xs text-gray-400 line-through">
-                                    Rs. {plan.original_price}
+                        {product.plans.map((plan) => {
+                          // Determine which price to display
+                          const userIsDistributor = isDistributor();
+                          const displayPrice = userIsDistributor && plan.special_price 
+                            ? plan.special_price 
+                            : plan.price;
+                          const showOriginalPrice = userIsDistributor && plan.special_price;
+
+                          return (
+                            <div
+                              key={plan.id}
+                              className="bg-gray-50 border border-gray-200 rounded p-4"
+                            >
+                              <h4 className="font-bold text-[#482072] mb-1 text-sm">
+                                {plan.plan_name}
+                              </h4>
+                              <p className="text-xs text-gray-600 mb-2">{plan.features}</p>
+                              <div className="flex items-center justify-between mb-3">
+                                <span className="text-xs text-gray-500 capitalize bg-white px-2 py-1 rounded border border-gray-200">
+                                  {plan.duration_type}
+                                </span>
+                                <div className="text-right">
+                                  {showOriginalPrice && (
+                                    <>
+                                      <p className="text-xs text-gray-400 line-through">
+                                        Rs. {plan.price}
+                                      </p>
+                                      <p className="text-xs text-green-600 font-semibold">
+                                        Distributor Price
+                                      </p>
+                                    </>
+                                  )}
+                                  <p className="text-xl font-bold text-[#7B5DE8]">
+                                    Rs. {displayPrice}
                                   </p>
-                                )}
-                                <p className="text-xl font-bold text-[#7B5DE8]">
-                                  Rs. {plan.price}
-                                </p>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <button 
+                                  onClick={() => handleBuyNow(product, plan)}
+                                  className="w-full bg-[#7B5DE8] text-white py-2 rounded font-semibold text-sm hover:bg-[#6A4BC4] transition-all"
+                                >
+                                  Buy Now
+                                </button>
+                                <button 
+                                  onClick={() => addToCart(product, plan)}
+                                  className="w-full bg-white border-2 border-[#7B5DE8] text-[#7B5DE8] py-2 rounded font-semibold text-sm hover:bg-[#7B5DE8] hover:text-white transition-all"
+                                >
+                                  Add to Cart
+                                </button>
                               </div>
                             </div>
-                            <div className="space-y-2">
-                              <button 
-                                onClick={() => handleBuyNow(product, plan)}
-                                className="w-full bg-[#7B5DE8] text-white py-2 rounded font-semibold text-sm hover:bg-[#6A4BC4] transition-all"
-                              >
-                                Buy Now
-                              </button>
-                              <button 
-                                onClick={() => addToCart(product, plan)}
-                                className="w-full bg-white border-2 border-[#7B5DE8] text-[#7B5DE8] py-2 rounded font-semibold text-sm hover:bg-[#7B5DE8] hover:text-white transition-all"
-                              >
-                                Add to Cart
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   ))}

@@ -45,11 +45,18 @@ const UserLogin: React.FC = () => {
         throw new Error(data?.message || "Login failed.");
       }
 
-      // Store token and user data
-      if (data?.token) {
-        localStorage.setItem("userToken", data.token);
-      }
-      if (data?.user) {
+      // Store token and user data based on role
+      if (data?.token && data?.user) {
+        const userRole = data.user.role;
+        
+        // Save token based on role
+        if (userRole === "distributor") {
+          localStorage.setItem("distributorToken", data.token);
+        } else {
+          localStorage.setItem("userToken", data.token);
+        }
+        
+        // Save user data
         localStorage.setItem("user", JSON.stringify(data.user));
       }
 

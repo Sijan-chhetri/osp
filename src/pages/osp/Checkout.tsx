@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../../components/osp/Navbar";
 import Footer from "../../components/osp/Footer";
 import { API_ENDPOINTS } from "../../api/api";
+import { getAuthToken } from "../../utils/auth";
 
 interface Plan {
   id: string;
@@ -88,7 +89,7 @@ const Checkout: React.FC = () => {
 
   // Auto-fill form if user is logged in
   useEffect(() => {
-    const userToken = localStorage.getItem("userToken");
+    const userToken = getAuthToken();
     const userData = localStorage.getItem("user");
     
     if (userToken && userData) {
@@ -141,7 +142,7 @@ const Checkout: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const userToken = localStorage.getItem("userToken");
+      const userToken = getAuthToken();
       
       // Map payment method to API format
       const paymentMethodMap: Record<string, string> = {

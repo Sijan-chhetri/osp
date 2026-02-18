@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useScrollDirection } from "../../hooks/useScrollDirection";
+import { getAuthToken, isAuthenticated, logout } from "../../utils/auth";
 
 const Navbar: React.FC = () => {
   const { isVisible, isScrolling } = useScrollDirection();
@@ -12,14 +13,13 @@ const Navbar: React.FC = () => {
 
   // Check if user is logged in
   useEffect(() => {
-    const token = localStorage.getItem("userToken");
-    setIsLoggedIn(!!token);
+    setIsLoggedIn(isAuthenticated());
   }, [location]);
 
   // Update cart count
   useEffect(() => {
     const updateCartCount = async () => {
-      const token = localStorage.getItem("userToken");
+      const token = getAuthToken();
       
       if (token) {
         // Fetch cart count from API for logged-in users
@@ -65,8 +65,7 @@ const Navbar: React.FC = () => {
   }, [location]);
 
   const handleLogout = () => {
-    localStorage.removeItem("userToken");
-    localStorage.removeItem("user");
+    logout();
     setIsLoggedIn(false);
     setShowUserMenu(false);
     navigate("/");
@@ -132,12 +131,12 @@ const Navbar: React.FC = () => {
           >
             Products
           </button>
-          {/* <button
-            onClick={() => scrollToSection("how-it-works")}
+          <button
+            onClick={() => navigate("/services")}
             className="hover:text-[#6E4294] transition-colors"
           >
-            How it Works
-          </button> */}
+            Services
+          </button>
           <button
             onClick={() => scrollToSection("why-choose")}
             className="hover:text-[#6E4294] transition-colors"

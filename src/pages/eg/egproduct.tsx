@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from "../../api/api";
 import toast from "react-hot-toast";
+import { getAuthToken } from "../../utils/auth";
 
 interface CartridgeProduct {
   id: string;
@@ -30,7 +31,7 @@ const ProductCard: React.FC<{ product: CartridgeProduct; onCartUpdate: () => voi
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    const token = localStorage.getItem("userToken");
+    const token = getAuthToken();
 
     if (token) {
       // Logged-in user: Use API

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/osp/Navbar";
 import Footer from "../../components/osp/Footer";
 import { API_ENDPOINTS } from "../../api/api";
+import { getAuthToken, isAuthenticated } from "../../utils/auth";
 
 interface Plan {
   id: string;
@@ -57,13 +58,12 @@ const Cart: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("userToken");
-    setIsLoggedIn(!!token);
+    setIsLoggedIn(isAuthenticated());
     loadCart();
   }, []);
 
   const loadCart = async () => {
-    const token = localStorage.getItem("userToken");
+    const token = getAuthToken();
     
     if (token) {
       // Load from API for logged-in users
@@ -125,7 +125,7 @@ const Cart: React.FC = () => {
     if (isLoggedIn) {
       // Update via API
       const item = apiCartItems[index];
-      const token = localStorage.getItem("userToken");
+      const token = getAuthToken();
 
       try {
         const response = await fetch(API_ENDPOINTS.CART_ITEM(item.id), {
@@ -157,7 +157,7 @@ const Cart: React.FC = () => {
     if (isLoggedIn) {
       // Remove via API
       const item = apiCartItems[index];
-      const token = localStorage.getItem("userToken");
+      const token = getAuthToken();
 
       try {
         const response = await fetch(API_ENDPOINTS.CART_ITEM(item.id), {
@@ -185,7 +185,7 @@ const Cart: React.FC = () => {
   const clearCart = async () => {
     if (isLoggedIn) {
       // Clear via API
-      const token = localStorage.getItem("userToken");
+      const token = getAuthToken();
 
       try {
         const response = await fetch(API_ENDPOINTS.CART, {
