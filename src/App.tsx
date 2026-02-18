@@ -44,6 +44,14 @@ import CartridgeProductCreate from "./admin/pages/cartridgeProductCreate.tsx";
 import CartridgeProductEdit from "./admin/pages/cartridgeProductEdit.tsx";
 import CartridgeQRList from "./admin/pages/cartridgeQRList.tsx";
 
+// Software Order Pages
+import SoftwareOrderList from "./admin/pages/softwareOrderList.tsx";
+import SoftwareOrderDetail from "./admin/pages/softwareOrderDetail.tsx";
+
+// Cartridge Order Pages
+import CartridgeOrderList from "./admin/pages/cartridgeOrderList.tsx";
+import CartridgeOrderDetail from "./admin/pages/cartridgeOrderDetail.tsx";
+
 
 function App() {
   return (
@@ -147,6 +155,12 @@ function App() {
             <Route path="softwarePlanCreate" element={<SoftwarePlanCreate />} />
           </Route>
 
+          {/* Software Order Routes */}
+          <Route path="orders">
+            <Route index element={<SoftwareOrderList />} />
+            <Route path=":id" element={<SoftwareOrderDetail />} />
+          </Route>
+
           {/* Cartridge Management Routes */}
           <Route path="cartridge">
             <Route path="brands">
@@ -168,6 +182,12 @@ function App() {
             </Route>
 
             <Route path="qr-codes" element={<CartridgeQRList />} />
+
+            {/* Cartridge Order Routes */}
+            <Route path="orders">
+              <Route index element={<CartridgeOrderList />} />
+              <Route path=":id" element={<CartridgeOrderDetail />} />
+            </Route>
           </Route>
 
           <Route path="adminProfile" element={<AdminProfile />} />

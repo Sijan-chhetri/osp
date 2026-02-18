@@ -2,37 +2,86 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import EgNavbar from "../../components/eg/egNavbar";
 import EgFooter from "../../components/eg/egFooter";
+import { API_ENDPOINTS } from "../../api/api";
+import toast from "react-hot-toast";
 
 interface CartItem {
   id: string;
+  cartridge_product_id?: string;
   product_name: string;
   model_number: string;
   unit_price: number;
-  special_price: number | null;
+  special_price?: number | null;
+  current_price?: number;
   quantity: number;
-  addedAt: string;
+  subtotal?: number;
+  addedAt?: string;
+}
+
+interface ApiCartResponse {
+  cart: {
+    id: string;
+    user_id: string;
+    status: string;
+  };
+  items: CartItem[];
+  total: number;
+  item_count: number;
 }
 
 const CartridgeCart: React.FC = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    const token = localStorage.getItem("userToken");
+    setIsLoggedIn(!!token);
     loadCart();
   }, []);
 
-  const loadCart = () => {
-    const cart = localStorage.getItem("cartridgeCart");
-    if (cart) {
+  const loadCart = async () => {
+    const token = localStorage.getItem("userToken");
+
+    if (token) {
+      // Logged-in user: Fetch from API
       try {
-        const items = JSON.parse(cart);
-        setCartItems(items);
-        // Select all items by default
-        setSelectedItems(new Set(items.map((item: CartItem) => item.id)));
+        const response = await fetch(API_ENDPOINTS.CARTRIDGE_CART_GET, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data: ApiCartResponse = await response.json();
+
+        if (response.ok) {
+          setCartItems(data.items || []);
+          // Select all items by default
+          setSelectedItems(new Set((data.items || []).map((item) => item.id)));
+        } else {
+          console.error("Failed to load cart:", data);
+        }
       } catch (error) {
         console.error("Error loading cart:", error);
+      } finally {
+        setLoading(false);
       }
+    } else {
+      // Guest user: Load from localStorage
+      const cart = localStorage.getItem("cartridgeCart");
+      if (cart) {
+        try {
+          const items = JSON.parse(cart);
+          setCartItems(items);
+          // Select all items by default
+          setSelectedItems(new Set(items.map((item: CartItem) => item.id)));
+        } catch (error) {
+          console.error("Error loading cart:", error);
+        }
+      }
+      setLoading(false);
     }
   };
 
@@ -54,24 +103,85 @@ const CartridgeCart: React.FC = () => {
     setSelectedItems(newSelected);
   };
 
-  const handleQuantityChange = (id: string, newQuantity: number) => {
+  const handleQuantityChange = async (id: string, newQuantity: number) => {
     if (newQuantity < 1) return;
 
-    const updatedCart = cartItems.map((item) =>
-      item.id === id ? { ...item, quantity: newQuantity } : item
-    );
-    setCartItems(updatedCart);
-    localStorage.setItem("cartridgeCart", JSON.stringify(updatedCart));
+    const token = localStorage.getItem("userToken");
+
+    if (token) {
+      // Logged-in user: Update via API
+      try {
+        const response = await fetch(API_ENDPOINTS.CARTRIDGE_CART_UPDATE_ITEM(id), {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ quantity: newQuantity }),
+        });
+
+        const data: { cart: ApiCartResponse } = await response.json();
+
+        if (response.ok) {
+          setCartItems(data.cart.items || []);
+          toast.success("Quantity updated");
+        } else {
+          toast.error("Failed to update quantity");
+        }
+      } catch (error) {
+        console.error("Error updating quantity:", error);
+        toast.error("Error updating quantity");
+      }
+    } else {
+      // Guest user: Update localStorage
+      const updatedCart = cartItems.map((item) =>
+        item.id === id ? { ...item, quantity: newQuantity } : item
+      );
+      setCartItems(updatedCart);
+      localStorage.setItem("cartridgeCart", JSON.stringify(updatedCart));
+    }
   };
 
-  const handleRemoveItem = (id: string) => {
-    const updatedCart = cartItems.filter((item) => item.id !== id);
-    setCartItems(updatedCart);
-    localStorage.setItem("cartridgeCart", JSON.stringify(updatedCart));
-    
-    const newSelected = new Set(selectedItems);
-    newSelected.delete(id);
-    setSelectedItems(newSelected);
+  const handleRemoveItem = async (id: string) => {
+    const token = localStorage.getItem("userToken");
+
+    if (token) {
+      // Logged-in user: Remove via API
+      try {
+        const response = await fetch(API_ENDPOINTS.CARTRIDGE_CART_REMOVE_ITEM(id), {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data: { cart: ApiCartResponse } = await response.json();
+
+        if (response.ok) {
+          setCartItems(data.cart.items || []);
+          const newSelected = new Set(selectedItems);
+          newSelected.delete(id);
+          setSelectedItems(newSelected);
+          toast.success("Item removed from cart");
+          window.dispatchEvent(new Event("cartUpdated"));
+        } else {
+          toast.error("Failed to remove item");
+        }
+      } catch (error) {
+        console.error("Error removing item:", error);
+        toast.error("Error removing item");
+      }
+    } else {
+      // Guest user: Remove from localStorage
+      const updatedCart = cartItems.filter((item) => item.id !== id);
+      setCartItems(updatedCart);
+      localStorage.setItem("cartridgeCart", JSON.stringify(updatedCart));
+
+      const newSelected = new Set(selectedItems);
+      newSelected.delete(id);
+      setSelectedItems(newSelected);
+      window.dispatchEvent(new Event("cartUpdated"));
+    }
   };
 
   const handleCheckout = () => {
@@ -96,13 +206,28 @@ const CartridgeCart: React.FC = () => {
     return cartItems
       .filter((item) => selectedItems.has(item.id))
       .reduce((sum, item) => {
-        const price = item.special_price || item.unit_price;
+        const price = item.current_price || item.special_price || item.unit_price;
         return sum + price * item.quantity;
       }, 0);
   };
 
   const selectedCount = selectedItems.size;
   const total = calculateTotal();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <EgNavbar />
+        <div className="max-w-7xl mx-auto px-8 py-32 mt-20">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e3a8a]"></div>
+            <p className="text-gray-600 mt-4">Loading cart...</p>
+          </div>
+        </div>
+        <EgFooter />
+      </div>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -169,7 +294,7 @@ const CartridgeCart: React.FC = () => {
               {/* Cart Items List */}
               <div className="space-y-4">
                 {cartItems.map((item) => {
-                  const displayPrice = item.special_price || item.unit_price;
+                  const displayPrice = item.current_price || item.special_price || item.unit_price;
                   const hasDiscount = item.special_price && item.special_price < item.unit_price;
 
                   return (

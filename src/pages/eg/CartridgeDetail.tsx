@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from "../../api/api";
 import EgNavbar from "../../components/eg/egNavbar";
 import EgFooter from "../../components/eg/egFooter";
+import toast from "react-hot-toast";
 
 interface CartridgeProduct {
   id: string;
@@ -51,41 +52,73 @@ const CartridgeDetail: React.FC = () => {
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
 
-    // Get existing cart from localStorage
-    const existingCart = localStorage.getItem("cartridgeCart");
-    let cart = existingCart ? JSON.parse(existingCart) : [];
+    const token = localStorage.getItem("userToken");
 
-    // Check if product already exists in cart
-    const existingItemIndex = cart.findIndex((item: any) => item.id === product.id);
+    if (token) {
+      // Logged-in user: Use API
+      try {
+        const response = await fetch(API_ENDPOINTS.CARTRIDGE_CART_ADD, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            cartridge_product_id: product.id,
+            quantity: quantity,
+          }),
+        });
 
-    if (existingItemIndex > -1) {
-      // Update quantity
-      cart[existingItemIndex].quantity += quantity;
+        const data = await response.json();
+
+        if (response.ok) {
+          toast.success("Product added to cart!");
+          window.dispatchEvent(new Event("cartUpdated"));
+        } else {
+          toast.error(data.message || "Failed to add to cart");
+        }
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+        toast.error("Error adding to cart");
+      }
     } else {
-      // Add new item
-      cart.push({
-        id: product.id,
-        product_name: product.product_name,
-        model_number: product.model_number,
-        unit_price: product.unit_price,
-        special_price: product.special_price,
-        quantity: quantity,
-        addedAt: new Date().toISOString(),
-      });
-    }
+      // Guest user: Use localStorage
+      const existingCart = localStorage.getItem("cartridgeCart");
+      let cart = existingCart ? JSON.parse(existingCart) : [];
 
-    localStorage.setItem("cartridgeCart", JSON.stringify(cart));
-    alert("Product added to cart!");
+      // Check if product already exists in cart
+      const existingItemIndex = cart.findIndex((item: any) => item.id === product.id);
+
+      if (existingItemIndex > -1) {
+        // Update quantity
+        cart[existingItemIndex].quantity += quantity;
+      } else {
+        // Add new item
+        cart.push({
+          id: product.id,
+          product_name: product.product_name,
+          model_number: product.model_number,
+          unit_price: product.unit_price,
+          special_price: product.special_price,
+          quantity: quantity,
+          addedAt: new Date().toISOString(),
+        });
+      }
+
+      localStorage.setItem("cartridgeCart", JSON.stringify(cart));
+      toast.success("Product added to cart!");
+      window.dispatchEvent(new Event("cartUpdated"));
+    }
   };
 
   const handleBuyNow = () => {
     if (!product) return;
 
     // Navigate to checkout with product data
-    navigate("/checkout", {
+    navigate("/eg/checkout", {
       state: {
         cartridgeProduct: product,
         quantity: quantity,

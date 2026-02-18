@@ -8,37 +8,28 @@ import toast from "react-hot-toast";
 import { API_ENDPOINTS } from "../../api/api";
 import { useNavigate } from "react-router-dom";
 
-interface Order {
-  order_id: string;
+interface CartridgeOrder {
+  id: string;
   buyer_user_id: string | null;
   billing_full_name: string;
   billing_email: string;
   billing_phone: string;
   billing_address: string;
-  order_status: string;
-  order_total: string;
-  order_created_at: string;
-  order_updated_at: string;
+  status: string;
+  total: number;
+  created_at: string;
+  updated_at: string;
   user_email: string | null;
   user_role: string | null;
   payment_type: string;
   payment_status: string;
   paid_at: string | null;
-  order_items: Array<{
-    item_id: string;
-    product_name: string;
-    brand_name: string;
-    plan_name: string;
-    category_name: string;
-    unit_price: number;
-    serial_number: string | null;
-    barcode_value: string | null;
-  }>;
+  item_count: number;
 }
 
-const SoftwareOrderList: FC = () => {
+const CartridgeOrderList: FC = () => {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<CartridgeOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -60,7 +51,7 @@ const SoftwareOrderList: FC = () => {
       if (statusFilter !== "all") params.append("status", statusFilter);
       if (paymentFilter !== "all") params.append("payment_method", paymentFilter);
       
-      const url = `${API_ENDPOINTS.ADMIN_ORDERS_ALL}${params.toString() ? `?${params.toString()}` : ""}`;
+      const url = `${API_ENDPOINTS.CARTRIDGE_ORDERS_ALL}${params.toString() ? `?${params.toString()}` : ""}`;
       
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
@@ -85,7 +76,7 @@ const SoftwareOrderList: FC = () => {
       const matchSearch =
         order.billing_full_name.toLowerCase().includes(search.toLowerCase()) ||
         order.billing_email.toLowerCase().includes(search.toLowerCase()) ||
-        order.order_id.toLowerCase().includes(search.toLowerCase());
+        order.id.toLowerCase().includes(search.toLowerCase());
       return matchSearch;
     });
   }, [orders, search]);
@@ -121,11 +112,10 @@ const SoftwareOrderList: FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Debug: Component is rendering */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-[#6E4294]">Software Orders</h1>
-          <p className="text-sm text-brownSoft">View and manage all software orders.</p>
+          <h1 className="text-2xl font-semibold text-[#6E4294]">Cartridge Orders</h1>
+          <p className="text-sm text-brownSoft">View and manage all cartridge orders.</p>
         </div>
       </div>
 
@@ -190,20 +180,20 @@ const SoftwareOrderList: FC = () => {
               </tr>
             )}
             {paginatedOrders.map((order) => (
-              <tr key={order.order_id} className="border-t border-slate-100 hover:bg-slate-50 transition">
+              <tr key={order.id} className="border-t border-slate-100 hover:bg-slate-50 transition">
                 <td className="px-5 py-4">
                   <div>
                     <p className="font-medium text-brown">{order.billing_full_name || 'N/A'}</p>
                     <p className="text-xs text-brownSoft">{order.billing_email || 'N/A'}</p>
                   </div>
                 </td>
-                <td className="px-5 py-4 text-brown">{order.order_items?.length || 0}</td>
+                <td className="px-5 py-4 text-brown">{order.item_count || 0}</td>
                 <td className="px-5 py-4 font-semibold text-brown">
-                  Rs. {parseFloat(order.order_total || '0').toLocaleString()}
+                  Rs. {(order.total || 0).toLocaleString()}
                 </td>
                 <td className="px-5 py-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(order.order_status || 'pending')}`}>
-                    {order.order_status || 'pending'}
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(order.status || 'pending')}`}>
+                    {order.status || 'pending'}
                   </span>
                 </td>
                 <td className="px-5 py-4">
@@ -215,13 +205,13 @@ const SoftwareOrderList: FC = () => {
                   </div>
                 </td>
                 <td className="px-5 py-4 text-brownSoft">
-                  {order.order_created_at ? new Date(order.order_created_at).toLocaleDateString() : 'N/A'}
+                  {order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}
                 </td>
                 <td className="px-5 py-4 text-right">
                   <button
                     onClick={() => {
-                      if (order.order_id) {
-                        navigate(`/admin/orders/${order.order_id}`);
+                      if (order.id) {
+                        navigate(`/admin/cartridge/orders/${order.id}`);
                       } else {
                         toast.error("Order ID is missing");
                         console.error("Order data:", order);
@@ -269,4 +259,4 @@ const SoftwareOrderList: FC = () => {
   );
 };
 
-export default SoftwareOrderList;
+export default CartridgeOrderList;

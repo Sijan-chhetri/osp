@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { API_ENDPOINTS } from "../../api/api";
 
 const EgNavbar: React.FC = () => {
   const navigate = useNavigate();
@@ -16,20 +17,44 @@ const EgNavbar: React.FC = () => {
 
   // Update cart count
   useEffect(() => {
-    const updateCartCount = () => {
-      // Use cartridgeCart from localStorage for EG products
-      const cart = localStorage.getItem("cartridgeCart");
-      if (cart) {
+    const updateCartCount = async () => {
+      const token = localStorage.getItem("userToken");
+
+      if (token) {
+        // Logged-in user: Fetch from API
         try {
-          const cartItems = JSON.parse(cart);
-          const totalCount = cartItems.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
-          setCartCount(totalCount);
+          const response = await fetch(API_ENDPOINTS.CARTRIDGE_CART_GET, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            setCartCount(data.item_count || 0);
+          } else {
+            setCartCount(0);
+          }
         } catch (error) {
-          console.error("Error parsing cart:", error);
+          console.error("Error fetching cart:", error);
           setCartCount(0);
         }
       } else {
-        setCartCount(0);
+        // Guest user: Use cartridgeCart from localStorage for EG products
+        const cart = localStorage.getItem("cartridgeCart");
+        if (cart) {
+          try {
+            const cartItems = JSON.parse(cart);
+            const totalCount = cartItems.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
+            setCartCount(totalCount);
+          } catch (error) {
+            console.error("Error parsing cart:", error);
+            setCartCount(0);
+          }
+        } else {
+          setCartCount(0);
+        }
       }
     };
 
@@ -47,8 +72,11 @@ const EgNavbar: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem("userToken");
     localStorage.removeItem("user");
+    localStorage.removeItem("cartridgeCart"); // Clear guest cart on logout
     setIsLoggedIn(false);
     setShowUserMenu(false);
+    setCartCount(0);
+    window.dispatchEvent(new Event("cartUpdated"));
     navigate("/");
   };
 

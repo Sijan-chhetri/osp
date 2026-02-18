@@ -50,22 +50,63 @@ const CartridgeCheckout: React.FC = () => {
 
   // Auto-fill form if user is logged in
   useEffect(() => {
-    const userToken = localStorage.getItem("userToken");
-    const userData = localStorage.getItem("user");
-    
-    if (userToken && userData) {
-      try {
-        const user = JSON.parse(userData);
-        setFormData((prev) => ({
-          ...prev,
-          fullName: user.full_name || prev.fullName,
-          email: user.email || prev.email,
-          phone: user.phone || prev.phone,
-        }));
-      } catch (error) {
-        console.error("Error parsing user data:", error);
+    const fetchUserProfile = async () => {
+      const token = localStorage.getItem("userToken");
+      
+      if (token) {
+        try {
+          // Try to fetch user profile from API
+          const response = await fetch(API_ENDPOINTS.AUTH_PROFILE, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.ok) {
+            const userData = await response.json();
+            setFormData((prev) => ({
+              ...prev,
+              fullName: userData.full_name || prev.fullName,
+              email: userData.email || prev.email,
+              phone: userData.phone || prev.phone,
+              address: userData.address || prev.address,
+              city: userData.city || prev.city,
+            }));
+          } else {
+            // Fallback to localStorage
+            const storedUser = localStorage.getItem("user");
+            if (storedUser) {
+              const user = JSON.parse(storedUser);
+              setFormData((prev) => ({
+                ...prev,
+                fullName: user.full_name || prev.fullName,
+                email: user.email || prev.email,
+                phone: user.phone || prev.phone,
+              }));
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+          // Fallback to localStorage
+          const storedUser = localStorage.getItem("user");
+          if (storedUser) {
+            try {
+              const user = JSON.parse(storedUser);
+              setFormData((prev) => ({
+                ...prev,
+                fullName: user.full_name || prev.fullName,
+                email: user.email || prev.email,
+                phone: user.phone || prev.phone,
+              }));
+            } catch (parseError) {
+              console.error("Error parsing user data:", parseError);
+            }
+          }
+        }
       }
-    }
+    };
+
+    fetchUserProfile();
   }, []);
 
   // Redirect if no product data
@@ -103,19 +144,80 @@ const CartridgeCheckout: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // For now, just show success message
-      // You can integrate with backend order API later
-      console.log("Cartridge Order:", {
-        formData,
-        paymentMethod: selectedPayment,
-        items: cartItems || [{ ...cartridgeProduct, quantity }],
+      const token = localStorage.getItem("userToken");
+      
+      // Map payment methods to API format
+      const paymentMethodMap: Record<string, string> = {
+        esewa: "esewa",
+        khalti: "khalti",
+        ips: "ips",
+        cash: "cod",
+      };
+
+      const apiPaymentMethod = paymentMethodMap[selectedPayment];
+
+      // Prepare billing info
+      const billingInfo = {
+        full_name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        address: `${formData.address}, ${formData.city}`,
+      };
+
+      let requestBody: any = {
+        billing_info: billingInfo,
+        payment_method: apiPaymentMethod,
+      };
+
+      // If guest user or single product checkout, include items
+      if (!token || cartridgeProduct) {
+        const items = cartItems
+          ? cartItems.map((item) => ({
+              cartridge_product_id: item.id,
+              quantity: item.quantity,
+              unit_price: item.special_price || item.unit_price,
+            }))
+          : [
+              {
+                cartridge_product_id: cartridgeProduct.id,
+                quantity: quantity || 1,
+                unit_price: cartridgeProduct.special_price || cartridgeProduct.unit_price,
+              },
+            ];
+        requestBody.items = items;
+      }
+
+      // Make API call
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(API_ENDPOINTS.CARTRIDGE_ORDER_FROM_CART, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(requestBody),
       });
 
-      // Clear cart from localStorage
-      localStorage.removeItem("cartridgeCart");
+      const data = await response.json();
 
-      alert("Order placed successfully!");
-      navigate("/eg");
+      if (response.ok) {
+        // Clear cart from localStorage for guest users
+        if (!token) {
+          localStorage.removeItem("cartridgeCart");
+        }
+        
+        // Dispatch cart update event
+        window.dispatchEvent(new Event("cartUpdated"));
+
+        alert(`Order placed successfully! Order ID: ${data.order.id}`);
+        navigate("/eg");
+      } else {
+        alert(data.message || "Failed to place order. Please try again.");
+      }
     } catch (error) {
       console.error("Error placing order:", error);
       alert("An error occurred while placing your order. Please try again.");

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from "../../api/api";
+import toast from "react-hot-toast";
 
 interface CartridgeProduct {
   id: string;
@@ -17,13 +18,76 @@ interface CartridgeProduct {
   updated_at: string;
 }
 
-const ProductCard: React.FC<{ product: CartridgeProduct }> = ({ product }) => {
+const ProductCard: React.FC<{ product: CartridgeProduct; onCartUpdate: () => void }> = ({ product, onCartUpdate }) => {
   const navigate = useNavigate();
   const displayPrice = product.special_price || product.unit_price;
   const hasDiscount = product.special_price && product.special_price < product.unit_price;
 
   const handleViewDetails = () => {
     navigate(`/eg/cartridge/${product.id}`);
+  };
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const token = localStorage.getItem("userToken");
+
+    if (token) {
+      // Logged-in user: Use API
+      try {
+        const response = await fetch(API_ENDPOINTS.CARTRIDGE_CART_ADD, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            cartridge_product_id: product.id,
+            quantity: 1,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          toast.success(`${product.product_name} added to cart!`);
+          onCartUpdate();
+        } else {
+          toast.error(data.message || "Failed to add to cart");
+        }
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+        toast.error("Error adding to cart");
+      }
+    } else {
+      // Guest user: Use localStorage
+      const existingCart = localStorage.getItem("cartridgeCart");
+      let cart = existingCart ? JSON.parse(existingCart) : [];
+
+      // Check if product already exists in cart
+      const existingItemIndex = cart.findIndex((item: any) => item.id === product.id);
+
+      if (existingItemIndex > -1) {
+        // Increase quantity
+        cart[existingItemIndex].quantity += 1;
+        toast.success(`Increased quantity of ${product.product_name}`);
+      } else {
+        // Add new item
+        cart.push({
+          id: product.id,
+          product_name: product.product_name,
+          model_number: product.model_number,
+          unit_price: product.unit_price,
+          special_price: product.special_price,
+          quantity: 1,
+        });
+        toast.success(`${product.product_name} added to cart!`);
+      }
+
+      // Save to localStorage
+      localStorage.setItem("cartridgeCart", JSON.stringify(cart));
+      onCartUpdate();
+    }
   };
 
   return (
@@ -50,23 +114,35 @@ const ProductCard: React.FC<{ product: CartridgeProduct }> = ({ product }) => {
       {/* Model Number */}
       <p className="text-gray-500 text-sm mb-4">Model: {product.model_number}</p>
 
-      {/* Price and Button */}
-      <div className="w-full flex items-center justify-between">
-        <div>
-          <p className="text-gray-500 text-sm">Price</p>
-          <div className="flex items-center gap-2">
-            <p className="text-[#1e3a8a] font-bold text-xl">Rs. {displayPrice}</p>
-            {hasDiscount && (
-              <p className="text-gray-400 text-sm line-through">Rs. {product.unit_price}</p>
-            )}
+      {/* Price and Buttons */}
+      <div className="w-full space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-gray-500 text-sm">Price</p>
+            <div className="flex items-center gap-2">
+              <p className="text-[#1e3a8a] font-bold text-xl">Rs. {displayPrice}</p>
+              {hasDiscount && (
+                <p className="text-gray-400 text-sm line-through">Rs. {product.unit_price}</p>
+              )}
+            </div>
           </div>
         </div>
-        <button 
-          onClick={handleViewDetails}
-          className="bg-[#1e3a8a] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#1e40af] transition-all duration-200"
-        >
-          Buy Now
-        </button>
+        
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <button 
+            onClick={handleAddToCart}
+            className="flex-1 bg-white border-2 border-[#1e3a8a] text-[#1e3a8a] px-6 py-3 rounded-full font-semibold hover:bg-[#1e3a8a] hover:text-white transition-all duration-200"
+          >
+            Add to Cart
+          </button>
+          <button 
+            onClick={handleViewDetails}
+            className="flex-1 bg-[#1e3a8a] text-white px-6 py-3 rounded-full font-semibold hover:bg-[#1e40af] transition-all duration-200"
+          >
+            Buy Now
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -76,10 +152,17 @@ const EgProduct: React.FC = () => {
   const [products, setProducts] = useState<CartridgeProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [cartUpdateTrigger, setCartUpdateTrigger] = useState(0);
 
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  const handleCartUpdate = () => {
+    setCartUpdateTrigger(prev => prev + 1);
+    // Dispatch custom event for navbar to update cart count
+    window.dispatchEvent(new Event("cartUpdated"));
+  };
 
   const fetchProducts = async () => {
     try {
@@ -140,7 +223,7 @@ const EgProduct: React.FC = () => {
           ) : (
             <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} onCartUpdate={handleCartUpdate} />
               ))}
             </div>
           )}

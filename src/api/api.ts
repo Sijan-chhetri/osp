@@ -28,4 +28,16 @@ export const API_ENDPOINTS = {
   CARTRIDGE_QR_DEACTIVATE: (productId: string) => `${API_BASE_URL}/cartridge/products/qr/${productId}/deactivate`,
   CARTRIDGE_QR_REACTIVATE: (productId: string) => `${API_BASE_URL}/cartridge/products/qr/${productId}/reactivate`,
   CARTRIDGE_QR_DELETE: (productId: string) => `${API_BASE_URL}/cartridge/products/qr/${productId}`,
+  
+  // Cartridge Cart (User)
+  CARTRIDGE_CART_ADD: `${API_BASE_URL}/cartridge/cart/add`,
+  CARTRIDGE_CART_GET: `${API_BASE_URL}/cartridge/cart`,
+  CARTRIDGE_CART_UPDATE_ITEM: (itemId: string) => `${API_BASE_URL}/cartridge/cart/items/${itemId}`,
+  CARTRIDGE_CART_REMOVE_ITEM: (itemId: string) => `${API_BASE_URL}/cartridge/cart/items/${itemId}`,
+  CARTRIDGE_CART_CLEAR: `${API_BASE_URL}/cartridge/cart/clear`,
+  
+  // Cartridge Orders
+  CARTRIDGE_ORDER_FROM_CART: `${API_BASE_URL}/cartridge/orders/from-cart`,
+  CARTRIDGE_ORDERS_ALL: `${API_BASE_URL}/cartridge/orders/admin/all`,
+  CARTRIDGE_ORDER_DETAILS: (orderId: string) => `${API_BASE_URL}/cartridge/orders/admin/details/${orderId}`,
 };
