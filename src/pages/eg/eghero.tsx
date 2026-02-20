@@ -6,7 +6,7 @@ const EgHero: React.FC = () => {
     <div className="p-5">
       <section
         id="hero"
-        className="relative w-full h-[85vh] flex flex-col"
+        className="relative w-full h-[95vh] flex flex-col"
         style={{
           background: "radial-gradient(ellipse 150% 100% at bottom center, #ffffff 0%, #e5e7eb 20%, #991b1b 45%, #7f1d1d 55%, #1e3a8a 75%, #0f172a 100%)",
           borderRadius: "20px",
