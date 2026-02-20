@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { API_ENDPOINTS } from "../../api/api";
-import { getAuthToken, isAuthenticated, logout } from "../../utils/auth";
+import { getAuthToken, isAuthenticated, isDistributor, logout } from "../../utils/auth";
 
 const EgNavbar: React.FC = () => {
   const navigate = useNavigate();
@@ -207,15 +207,17 @@ const EgNavbar: React.FC = () => {
               {/* User Dropdown Menu */}
               {showUserMenu && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
-                  <button
-                    onClick={() => {
-                      setShowUserMenu(false);
-                      navigate("/profile");
-                    }}
-                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
-                  >
-                    My Profile
-                  </button>
+                  {!isDistributor() && (
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        navigate("/profile");
+                      }}
+                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      My Profile
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       setShowUserMenu(false);

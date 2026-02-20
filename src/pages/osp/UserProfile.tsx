@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/osp/Navbar";
 import Footer from "../../components/osp/Footer";
 import { API_ENDPOINTS } from "../../api/api";
-import { getAuthToken } from "../../utils/auth";
+import { getAuthToken, isDistributor } from "../../utils/auth";
 
 interface UserProfile {
   id: string;
@@ -40,6 +40,13 @@ const UserProfile: React.FC = () => {
       navigate("/user-login");
       return;
     }
+    
+    // Redirect distributors to home page
+    if (isDistributor()) {
+      navigate("/");
+      return;
+    }
+    
     fetchProfile();
   }, [navigate]);
 

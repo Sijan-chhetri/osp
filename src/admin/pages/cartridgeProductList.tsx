@@ -138,13 +138,14 @@ const CartridgeProductList: FC = () => {
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
-        <table className="min-w-[1100px] w-full text-sm">
+        <table className="min-w-[1200px] w-full text-sm">
           <thead className="bg-slate-50 text-brown">
             <tr>
               <th className="px-5 py-3 text-left">QR Code</th>
               <th className="px-5 py-3 text-left">Product Name</th>
               <th className="px-5 py-3 text-left">Model</th>
               <th className="px-5 py-3 text-left">Price</th>
+              <th className="px-5 py-3 text-left">Special Price</th>
               <th className="px-5 py-3 text-left">Status</th>
               <th className="px-5 py-3 text-left">Created</th>
               <th className="px-5 py-3 text-right">Action</th>
@@ -153,12 +154,12 @@ const CartridgeProductList: FC = () => {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={7} className="px-5 py-6 text-center">Loading products...</td>
+                <td colSpan={8} className="px-5 py-6 text-center">Loading products...</td>
               </tr>
             )}
             {!loading && filteredProducts.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-5 py-6 text-center text-brownSoft">No products found.</td>
+                <td colSpan={8} className="px-5 py-6 text-center text-brownSoft">No products found.</td>
               </tr>
             )}
             {paginatedProducts.map((product) => (
@@ -188,10 +189,12 @@ const CartridgeProductList: FC = () => {
                 </td>
                 <td className="px-5 py-4 font-medium text-brown">{product.product_name}</td>
                 <td className="px-5 py-4 text-brownSoft">{product.model_number}</td>
-                <td className="px-5 py-4 text-brown">
-                  Rs. {product.special_price || product.unit_price}
-                  {product.special_price && (
-                    <span className="text-xs text-gray-400 line-through ml-2">Rs. {product.unit_price}</span>
+                <td className="px-5 py-4 text-brown">Rs. {product.unit_price}</td>
+                <td className="px-5 py-4">
+                  {product.special_price ? (
+                    <span className="text-green-700 font-medium">Rs. {product.special_price}</span>
+                  ) : (
+                    <span className="text-gray-400 text-xs">—</span>
                   )}
                 </td>
                 <td className="px-5 py-4">

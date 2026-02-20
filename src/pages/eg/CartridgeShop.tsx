@@ -7,7 +7,7 @@ import EgNavbar from "../../components/eg/egNavbar";
 import EgFooter from "../../components/eg/egFooter";
 
 import { API_ENDPOINTS } from "../../api/api";
-import { getAuthToken } from "../../utils/auth";
+import { getAuthToken, isDistributor } from "../../utils/auth";
 
 interface CartridgeProduct {
     id: string;
@@ -46,11 +46,14 @@ type CartridgeCategory = { id: string; name: string; is_active: boolean };
       categoryName?: string;
     }> = ({ product, onCartUpdate, brandName, categoryName }) => {
       const navigate = useNavigate();
-      const displayPrice = product.special_price ?? product.unit_price;
-
-      const hasDiscount =
-        product.special_price !== null &&
-        product.special_price < product.unit_price;
+      
+      // Only show special price to distributors
+      const userIsDistributor = isDistributor();
+      const displayPrice = userIsDistributor && product.special_price 
+        ? product.special_price 
+        : product.unit_price;
+      const hasDiscount = userIsDistributor && product.special_price && product.special_price < product.unit_price;
+      const savings = hasDiscount && product.special_price ? product.unit_price - product.special_price : 0;
 
       const handleViewDetails = () => {
         navigate(`/eg/cartridge/${product.id}`);
@@ -125,9 +128,9 @@ type CartridgeCategory = { id: string; name: string; is_active: boolean };
             onClick={handleViewDetails}
           >
             {hasDiscount && (
-              <div className="absolute top-0 right-0 bg-[#dc2626] text-white px-4 py-2 rounded-lg font-bold text-sm transform rotate-12">
-                SAVE Rs.{" "}
-                {product.unit_price - (product.special_price as number)}
+              <div className="absolute top-0 right-0 bg-green-600 text-white px-3 py-2 rounded-lg font-bold text-xs shadow-lg">
+                <div className="text-[10px]">Distributor</div>
+                <div>SAVE Rs. {savings}</div>
               </div>
             )}
             <img
@@ -170,13 +173,18 @@ type CartridgeCategory = { id: string; name: string; is_active: boolean };
 
           {/* Price and Buttons */}
           <div className="w-full space-y-3">
+            {hasDiscount && (
+              <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-2">
+                <p className="text-green-700 text-xs font-semibold">🎉 Distributor Special Price</p>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm">Price</p>
                 <div className="flex items-center gap-2">
                 <p
                     className={`font-bold text-xl ${
-                    hasDiscount ? "text-[#dc2626]" : "text-[#1e3a8a]"
+                    hasDiscount ? "text-green-600" : "text-[#1e3a8a]"
                     }`}
                 >
                     Rs. {displayPrice}
@@ -301,22 +309,18 @@ setTimeout(() => {
         productsData.data ||
         productsData ||
         []) as CartridgeProduct[];
-      const active = all.filter((p) => p.is_active);
+      const active = Array.isArray(all) ? all.filter((p) => p.is_active) : [];
       setProducts(active);
 
       // ✅ brands (backend: { brands })
-      const b = (brandsData.brands ||
-        brandsData.data ||
-        brandsData ||
-        []) as CartridgeBrand[];
-      setBrands(b.filter((x) => x.is_active));
+      const brandsArray = brandsData.brands || brandsData.data || brandsData || [];
+      const b = Array.isArray(brandsArray) ? brandsArray : [];
+      setBrands(b.filter((x: CartridgeBrand) => x.is_active));
 
       // ✅ categories (your backend might return {categories} OR array)
-      const c = (categoriesData.categories ||
-        categoriesData.data ||
-        categoriesData ||
-        []) as CartridgeCategory[];
-      setCategories(c.filter((x) => x.is_active));
+      const categoriesArray = categoriesData.categories || categoriesData.data || categoriesData || [];
+      const c = Array.isArray(categoriesArray) ? categoriesArray : [];
+      setCategories(c.filter((x: CartridgeCategory) => x.is_active));
 
       // price range init
       if (active.length > 0) {

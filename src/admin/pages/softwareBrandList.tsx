@@ -1,4 +1,3 @@
-// src/admin/pages/SoftwareBrands.tsx
 import { useEffect, useMemo, useState } from "react";
 import type { FC } from "react";
 import {
@@ -8,6 +7,7 @@ import {
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import { API } from "../../config/api.ts";
+import { API_ENDPOINTS } from "../../api/api";
 import { useNavigate } from "react-router-dom";
 
 /* ================= TYPES ================= */
@@ -15,6 +15,8 @@ import { useNavigate } from "react-router-dom";
 export type SoftwareBrandRow = {
   id: string;
   name: string;
+  thumbnail_url?: string;
+  original_url?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -189,9 +191,10 @@ const SoftwareBrands: FC = () => {
 
       {/* ================= TABLE ================= */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
-        <table className="min-w-[700px] w-full text-sm">
+        <table className="min-w-[800px] w-full text-sm">
           <thead className="bg-slate-50 text-brown">
             <tr>
+              <th className="px-5 py-3 text-left">Image</th>
               <th className="px-5 py-3 text-left">Name</th>
               <th className="px-5 py-3 text-left">Status</th>
               <th className="px-5 py-3 text-left">Created</th>
@@ -202,7 +205,7 @@ const SoftwareBrands: FC = () => {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={4} className="px-5 py-6 text-center">
+                <td colSpan={5} className="px-5 py-6 text-center">
                   Loading brands...
                 </td>
               </tr>
@@ -211,7 +214,7 @@ const SoftwareBrands: FC = () => {
             {!loading && filteredBrands.length === 0 && (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="px-5 py-6 text-center text-brownSoft"
                 >
                   No brands found.
@@ -224,6 +227,23 @@ const SoftwareBrands: FC = () => {
                 key={brand.id}
                 className="border-t border-slate-100 hover:bg-slate-50 transition"
               >
+                <td className="px-5 py-4">
+                  {brand.thumbnail_url ? (
+                    <img
+                      src={API_ENDPOINTS.SOFTWARE_BRAND_IMAGE(brand.thumbnail_url)}
+                      alt={brand.name}
+                      className="w-16 h-16 object-contain border border-slate-200 rounded-lg p-1"
+                      onError={(e) => {
+                        e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="%23f3f4f6"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%239ca3af" font-size="10">No Image</text></svg>';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-gray-100 border border-slate-200 rounded-lg flex items-center justify-center">
+                      <span className="text-xs text-gray-400">No Image</span>
+                    </div>
+                  )}
+                </td>
+
                 <td className="px-5 py-4 font-medium text-brown">
                   {brand.name}
                 </td>

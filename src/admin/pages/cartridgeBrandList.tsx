@@ -12,6 +12,8 @@ import { useNavigate } from "react-router-dom";
 interface Brand {
   id: string;
   name: string;
+  thumbnail_url?: string;
+  original_url?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -26,10 +28,6 @@ const CartridgeBrandList: FC = () => {
 
   const ITEMS_PER_PAGE = 5;
   const [currentPage, setCurrentPage] = useState(1);
-
-  const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editActive, setEditActive] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<Brand | null>(null);
 
   useEffect(() => {
@@ -98,48 +96,6 @@ const CartridgeBrandList: FC = () => {
     }
   };
 
-  const handleUpdate = async () => {
-    if (!editingBrand) return;
-
-    try {
-      const token = localStorage.getItem("token");
-      const payload = { name: editName.trim(), is_active: editActive };
-
-      if (!payload.name) {
-        toast.error("Brand name is required");
-        return;
-      }
-
-      const response = await fetch(API_ENDPOINTS.CARTRIDGE_BRAND(editingBrand.id), {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success("Brand updated successfully");
-        setBrands((prev) =>
-          prev.map((b) =>
-            b.id === editingBrand.id
-              ? { ...b, name: payload.name, is_active: payload.is_active }
-              : b
-          )
-        );
-        setEditingBrand(null);
-      } else {
-        toast.error(data.message || "Failed to update brand");
-      }
-    } catch (err) {
-      toast.error("Error updating brand");
-      console.error(err);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -178,9 +134,10 @@ const CartridgeBrandList: FC = () => {
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
-        <table className="min-w-[700px] w-full text-sm">
+        <table className="min-w-[800px] w-full text-sm">
           <thead className="bg-slate-50 text-brown">
             <tr>
+              <th className="px-5 py-3 text-left">Image</th>
               <th className="px-5 py-3 text-left">Name</th>
               <th className="px-5 py-3 text-left">Status</th>
               <th className="px-5 py-3 text-left">Created</th>
@@ -190,16 +147,32 @@ const CartridgeBrandList: FC = () => {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={4} className="px-5 py-6 text-center">Loading brands...</td>
+                <td colSpan={5} className="px-5 py-6 text-center">Loading brands...</td>
               </tr>
             )}
             {!loading && filteredBrands.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-5 py-6 text-center text-brownSoft">No brands found.</td>
+                <td colSpan={5} className="px-5 py-6 text-center text-brownSoft">No brands found.</td>
               </tr>
             )}
             {paginatedBrands.map((brand) => (
               <tr key={brand.id} className="border-t border-slate-100 hover:bg-slate-50 transition">
+                <td className="px-5 py-4">
+                  {brand.thumbnail_url ? (
+                    <img
+                      src={API_ENDPOINTS.CARTRIDGE_BRAND_IMAGE(brand.thumbnail_url)}
+                      alt={brand.name}
+                      className="w-16 h-16 object-contain border border-slate-200 rounded-lg p-1"
+                      onError={(e) => {
+                        e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="%23f3f4f6"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%239ca3af" font-size="10">No Image</text></svg>';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-gray-100 border border-slate-200 rounded-lg flex items-center justify-center">
+                      <span className="text-xs text-gray-400">No Image</span>
+                    </div>
+                  )}
+                </td>
                 <td className="px-5 py-4 font-medium text-brown">{brand.name}</td>
                 <td className="px-5 py-4">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -214,11 +187,7 @@ const CartridgeBrandList: FC = () => {
                 <td className="px-5 py-4 text-right">
                   <div className="flex justify-end gap-2">
                     <button
-                      onClick={() => {
-                        setEditingBrand(brand);
-                        setEditName(brand.name);
-                        setEditActive(brand.is_active);
-                      }}
+                      onClick={() => navigate(`/admin/cartridge/brands/edit/${brand.id}`)}
                       className="p-2 rounded-lg text-brownSoft hover:text-[#6E4294] hover:bg-[#6E4294]/10 transition"
                     >
                       <PencilSquareIcon className="w-5 h-5" />
@@ -263,39 +232,6 @@ const CartridgeBrandList: FC = () => {
           </button>
         </div>
       </div>
-
-      {editingBrand && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setEditingBrand(null)} />
-          <div className="relative bg-white w-full max-w-lg rounded-xl p-6 space-y-4 shadow-xl">
-            <h2 className="text-lg font-semibold text-brown">Edit Cartridge Brand</h2>
-            <div className="space-y-3">
-              <input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg"
-                placeholder="Name"
-              />
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={editActive}
-                  onChange={() => setEditActive((v) => !v)}
-                />
-                Active
-              </label>
-            </div>
-            <div className="flex justify-end gap-3 pt-4">
-              <button onClick={() => setEditingBrand(null)} className="px-4 py-2 border rounded-lg">
-                Cancel
-              </button>
-              <button onClick={handleUpdate} className="px-5 py-2 bg-[#6E4294] text-white rounded-lg">
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {deleteTarget && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">

@@ -357,7 +357,7 @@ const SoftwarePlanList: FC = () => {
 
       {/* TABLE */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
-        <table className="min-w-[1100px] w-full text-sm">
+        <table className="min-w-[1400px] w-full text-sm">
           <thead className="bg-slate-50 text-brown">
             <tr>
               <th className="px-5 py-3 text-left">Plan Name</th>
@@ -365,8 +365,10 @@ const SoftwarePlanList: FC = () => {
               <th className="px-5 py-3 text-left">Duration</th>
               <th className="px-5 py-3 text-left">Price</th>
               <th className="px-5 py-3 text-left">Special</th>
+              <th className="px-5 py-3 text-left">Activation Key</th>
+              <th className="px-5 py-3 text-left">Start Date</th>
+              <th className="px-5 py-3 text-left">Expiry Date</th>
               <th className="px-5 py-3 text-left">Status</th>
-              <th className="px-5 py-3 text-left">Created</th>
               <th className="px-5 py-3 text-right">Action</th>
             </tr>
           </thead>
@@ -374,7 +376,7 @@ const SoftwarePlanList: FC = () => {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={8} className="px-5 py-6 text-center">
+                <td colSpan={10} className="px-5 py-6 text-center">
                   Loading plans...
                 </td>
               </tr>
@@ -383,7 +385,7 @@ const SoftwarePlanList: FC = () => {
             {!loading && filteredPlans.length === 0 && (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={10}
                   className="px-5 py-6 text-center text-brownSoft"
                 >
                   No plans found.
@@ -416,12 +418,28 @@ const SoftwarePlanList: FC = () => {
                     : pl.special_price.toLocaleString()}
                 </td>
 
-                <td className="px-5 py-4">
-                  <StatusBadge active={pl.is_active} />
+                <td className="px-5 py-4 text-brownSoft">
+                  {pl.activation_key ? (
+                    <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
+                      {pl.activation_key.length > 15 
+                        ? `${pl.activation_key.substring(0, 15)}...` 
+                        : pl.activation_key}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
                 </td>
 
                 <td className="px-5 py-4 text-brownSoft">
-                  {new Date(pl.created_at).toLocaleDateString()}
+                  {pl.start_date ? new Date(pl.start_date).toLocaleDateString() : "—"}
+                </td>
+
+                <td className="px-5 py-4 text-brownSoft">
+                  {pl.expiry_date ? new Date(pl.expiry_date).toLocaleDateString() : "—"}
+                </td>
+
+                <td className="px-5 py-4">
+                  <StatusBadge active={pl.is_active} />
                 </td>
 
                 <td className="px-5 py-4 text-right">
@@ -451,8 +469,27 @@ const SoftwarePlanList: FC = () => {
                         );
                         setEditFeatures(pl.features || "");
                         setEditActivationKey(pl.activation_key || "");
-                        setEditStartDate(pl.start_date || "");
-                        setEditExpiryDate(pl.expiry_date || "");
+                        // Format dates for date input (YYYY-MM-DD)
+                        if (pl.start_date) {
+                          try {
+                            const date = new Date(pl.start_date);
+                            setEditStartDate(date.toISOString().split('T')[0]);
+                          } catch {
+                            setEditStartDate("");
+                          }
+                        } else {
+                          setEditStartDate("");
+                        }
+                        if (pl.expiry_date) {
+                          try {
+                            const date = new Date(pl.expiry_date);
+                            setEditExpiryDate(date.toISOString().split('T')[0]);
+                          } catch {
+                            setEditExpiryDate("");
+                          }
+                        } else {
+                          setEditExpiryDate("");
+                        }
                         setEditActive(pl.is_active);
                       }}
                       className="p-2 rounded-lg text-brownSoft hover:text-[#6E4294] hover:bg-[#6E4294]/10 transition"
@@ -620,8 +657,27 @@ const SoftwarePlanList: FC = () => {
                       );
                       setEditFeatures(viewPlan.features || "");
                       setEditActivationKey(viewPlan.activation_key || "");
-                      setEditStartDate(viewPlan.start_date || "");
-                      setEditExpiryDate(viewPlan.expiry_date || "");
+                      // Format dates for date input (YYYY-MM-DD)
+                      if (viewPlan.start_date) {
+                        try {
+                          const date = new Date(viewPlan.start_date);
+                          setEditStartDate(date.toISOString().split('T')[0]);
+                        } catch {
+                          setEditStartDate("");
+                        }
+                      } else {
+                        setEditStartDate("");
+                      }
+                      if (viewPlan.expiry_date) {
+                        try {
+                          const date = new Date(viewPlan.expiry_date);
+                          setEditExpiryDate(date.toISOString().split('T')[0]);
+                        } catch {
+                          setEditExpiryDate("");
+                        }
+                      } else {
+                        setEditExpiryDate("");
+                      }
                       setEditActive(viewPlan.is_active);
                       closeViewModal();
                     }}

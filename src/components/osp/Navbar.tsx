@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useScrollDirection } from "../../hooks/useScrollDirection";
-import { getAuthToken, isAuthenticated, logout } from "../../utils/auth";
+import { getAuthToken, isAuthenticated, isDistributor, logout } from "../../utils/auth";
 
 
 /** ✅ Declared outside render */
@@ -262,12 +262,14 @@ const Navbar: React.FC = () => {
 
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
-                    <button
-                      onClick={() => navigateTo("/profile")}
-                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
-                    >
-                      My Profile
-                    </button>
+                    {!isDistributor() && (
+                      <button
+                        onClick={() => navigateTo("/profile")}
+                        className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                      >
+                        My Profile
+                      </button>
+                    )}
                     <button
                       onClick={() => navigateTo("/orders")}
                       className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
@@ -392,10 +394,12 @@ const Navbar: React.FC = () => {
               <div className="border-t border-gray-200 py-2">
                 {isLoggedIn ? (
                   <>
-                    <MobileNavButton
-                      label="My Profile"
-                      onClick={() => navigateTo("/profile")}
-                    />
+                    {!isDistributor() && (
+                      <MobileNavButton
+                        label="My Profile"
+                        onClick={() => navigateTo("/profile")}
+                      />
+                    )}
                     <MobileNavButton
                       label="My Orders"
                       onClick={() => navigateTo("/orders")}
