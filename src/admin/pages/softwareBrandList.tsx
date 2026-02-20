@@ -43,12 +43,6 @@ const SoftwareBrands: FC = () => {
   const ITEMS_PER_PAGE = 5;
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [editingBrand, setEditingBrand] = useState<SoftwareBrandRow | null>(
-    null,
-  );
-  const [editName, setEditName] = useState("");
-  const [editActive, setEditActive] = useState(true);
-
   const [deleteTarget, setDeleteTarget] = useState<SoftwareBrandRow | null>(
     null,
   );
@@ -128,65 +122,6 @@ const SoftwareBrands: FC = () => {
 
       setBrands((prev) => prev.filter((b) => b.id !== deleteTarget.id));
       setDeleteTarget(null);
-    } catch (err: unknown) {
-      toast.error(getErrorMessage(err));
-    }
-  };
-
-  /* -------- Update -------- */
-
-  const handleUpdate = async () => {
-    if (!editingBrand) return;
-
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("You are not authenticated.");
-
-      const payload = {
-        name: editName.trim(),
-        is_active: editActive,
-      };
-
-      if (!payload.name) {
-        toast.error("Brand name is required");
-        return;
-      }
-
-      const res = await fetch(`${API.BRANDS}/${editingBrand.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data: ApiErrorResponse & { data?: SoftwareBrandRow } =
-        await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Update failed");
-      }
-
-      toast.success(data.message || "Brand updated successfully");
-
-      // update state locally
-      if (data.data) {
-        setBrands((prev) =>
-          prev.map((b) => (b.id === editingBrand.id ? data.data! : b)),
-        );
-      } else {
-        // fallback: patch locally if API didn't return updated row
-        setBrands((prev) =>
-          prev.map((b) =>
-            b.id === editingBrand.id
-              ? { ...b, name: payload.name, is_active: payload.is_active }
-              : b,
-          ),
-        );
-      }
-
-      setEditingBrand(null);
     } catch (err: unknown) {
       toast.error(getErrorMessage(err));
     }
@@ -305,11 +240,7 @@ const SoftwareBrands: FC = () => {
                   <div className="flex justify-end gap-2">
                     {/* EDIT */}
                     <button
-                      onClick={() => {
-                        setEditingBrand(brand);
-                        setEditName(brand.name);
-                        setEditActive(brand.is_active);
-                      }}
+                      onClick={() => navigate(`/admin/brands/edit/${brand.id}`)}
                       className="p-2 rounded-lg text-brownSoft hover:text-[#6E4294] hover:bg-[#6E4294]/10 transition"
                     >
                       <PencilSquareIcon className="w-5 h-5" />
@@ -361,58 +292,6 @@ const SoftwareBrands: FC = () => {
           </button>
         </div>
       </div>
-
-      {/* ================= EDIT MODAL ================= */}
-      {editingBrand && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center">
-          {/* OVERLAY */}
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setEditingBrand(null)}
-          />
-
-          {/* MODAL */}
-          <div className="relative bg-white w-full max-w-lg rounded-xl p-6 space-y-4 shadow-xl">
-            <h2 className="text-lg font-semibold text-brown">
-              Edit Software Brand
-            </h2>
-
-            <div className="space-y-3">
-              <input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg"
-                placeholder="Name"
-              />
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={editActive}
-                  onChange={() => setEditActive((v) => !v)}
-                />
-                Active
-              </label>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4">
-              <button
-                onClick={() => setEditingBrand(null)}
-                className="px-4 py-2 border rounded-lg"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleUpdate}
-                className="px-5 py-2 bg-[#6E4294] text-white rounded-lg"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ================= DELETE MODAL ================= */}
       {deleteTarget && (

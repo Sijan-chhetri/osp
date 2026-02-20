@@ -26,6 +26,7 @@ const CartridgeProductCreate: FC = () => {
   const [categoryId, setCategoryId] = useState("");
   const [unitPrice, setUnitPrice] = useState("");
   const [specialPrice, setSpecialPrice] = useState("");
+  const [quantity, setQuantity] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -92,6 +93,7 @@ const CartridgeProductCreate: FC = () => {
         description: description.trim() || null,
         unit_price: parseFloat(unitPrice),
         special_price: specialPrice ? parseFloat(specialPrice) : null,
+        quantity: quantity ? parseInt(quantity) : 0,
         is_active: isActive,
       };
 
@@ -270,6 +272,25 @@ const CartridgeProductCreate: FC = () => {
               className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#6E4294]"
             />
           </div>
+        </div>
+
+        {/* QUANTITY */}
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-brown">
+            Quantity (Stock) - Optional
+          </label>
+          <input
+            type="number"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            min="0"
+            step="1"
+            placeholder="100"
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#6E4294]"
+          />
+          <p className="text-xs text-brownSoft">
+            Available stock quantity (defaults to 0 if not specified)
+          </p>
         </div>
 
         {/* ACTIVE */}

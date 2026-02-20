@@ -9,12 +9,42 @@ const CartridgeBrandEdit: FC = () => {
   const { id } = useParams<{ id: string }>();
   const [name, setName] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
     fetchBrand();
   }, [id]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+      if (!validTypes.includes(file.type)) {
+        toast.error("Please upload a valid image file (JPEG, PNG, GIF, WebP)");
+        return;
+      }
+
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size must be less than 5MB");
+        return;
+      }
+
+      setImage(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const fetchBrand = async () => {
     try {
@@ -29,6 +59,9 @@ const CartridgeBrandEdit: FC = () => {
         const brand = data.brand || data;
         setName(brand.name);
         setIsActive(brand.is_active);
+        if (brand.thumbnail_url) {
+          setCurrentImageUrl(brand.thumbnail_url);
+        }
       } else {
         toast.error(data.message || "Failed to fetch brand");
       }
@@ -48,20 +81,27 @@ const CartridgeBrandEdit: FC = () => {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("You are not authenticated.");
 
-      const payload = { name: name.trim(), is_active: isActive };
-
-      if (!payload.name) {
+      if (!name.trim()) {
         toast.error("Brand name is required");
         return;
+      }
+
+      // Create FormData for multipart/form-data
+      const formData = new FormData();
+      formData.append("name", name.trim());
+      formData.append("is_active", String(isActive));
+      
+      // Only append image if a new one is selected
+      if (image) {
+        formData.append("image", image);
       }
 
       const response = await fetch(API_ENDPOINTS.CARTRIDGE_BRAND(id!), {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       const data = await response.json();
@@ -108,6 +148,45 @@ const CartridgeBrandEdit: FC = () => {
             placeholder="e.g. HP"
             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#6E4294]"
           />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-brown">Brand Image</label>
+          <p className="text-xs text-brownSoft mb-2">
+            Upload new brand logo (optional - JPEG, PNG, GIF, WebP - Max 5MB)
+          </p>
+          
+          {currentImageUrl && !imagePreview && (
+            <div className="mb-3">
+              <p className="text-xs text-brownSoft mb-2">Current Image:</p>
+              <img
+                src={API_ENDPOINTS.CARTRIDGE_BRAND_IMAGE(currentImageUrl)}
+                alt="Current brand"
+                className="w-32 h-32 object-contain border border-slate-200 rounded-lg p-2"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
+          
+          <input
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+            onChange={handleImageChange}
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#6E4294]"
+          />
+          
+          {imagePreview && (
+            <div className="mt-3">
+              <p className="text-xs text-brownSoft mb-2">New Preview:</p>
+              <img
+                src={imagePreview}
+                alt="Brand preview"
+                className="w-32 h-32 object-contain border border-slate-200 rounded-lg p-2"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between">

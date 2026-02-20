@@ -4,7 +4,7 @@ import { API_ENDPOINTS } from "../../api/api";
 import EgNavbar from "../../components/eg/egNavbar";
 import EgFooter from "../../components/eg/egFooter";
 import toast from "react-hot-toast";
-import { getAuthToken } from "../../utils/auth";
+import { getAuthToken, isDistributor } from "../../utils/auth";
 
 interface CartridgeProduct {
   id: string;
@@ -15,6 +15,7 @@ interface CartridgeProduct {
   description: string;
   unit_price: number;
   special_price: number | null;
+  quantity: number;
   is_active: boolean;
   created_by: string;
   created_at: string;
@@ -56,12 +57,24 @@ const CartridgeDetail: React.FC = () => {
   const handleAddToCart = async () => {
     if (!product) return;
 
+    // Check if product is out of stock
+    if (product.quantity <= 0) {
+      toast.error("This product is out of stock");
+      return;
+    }
+
+    // Check if requested quantity exceeds available stock
+    if (quantity > product.quantity) {
+      toast.error(`Cannot add ${quantity} items! Only ${product.quantity} available in stock`);
+      return;
+    }
+
     const token = getAuthToken();
 
     if (token) {
-      // Logged-in user: Use API
-      try {
-        const response = await fetch(API_ENDPOINTS.CARTRIDGE_CART_ADD, {
+      // Logged-in user: Use API - fire and forget for speed
+      toast.promise(
+        fetch(API_ENDPOINTS.CARTRIDGE_CART_ADD, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -71,20 +84,20 @@ const CartridgeDetail: React.FC = () => {
             cartridge_product_id: product.id,
             quantity: quantity,
           }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          toast.success("Product added to cart!");
+        }).then(async (response) => {
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.message || "Failed to add to cart");
+          }
           window.dispatchEvent(new Event("cartUpdated"));
-        } else {
-          toast.error(data.message || "Failed to add to cart");
+          return data;
+        }),
+        {
+          loading: 'Adding to cart...',
+          success: 'Product added to cart!',
+          error: (err) => err.message || 'Failed to add to cart',
         }
-      } catch (error) {
-        console.error("Error adding to cart:", error);
-        toast.error("Error adding to cart");
-      }
+      );
     } else {
       // Guest user: Use localStorage
       const existingCart = localStorage.getItem("cartridgeCart");
@@ -95,7 +108,12 @@ const CartridgeDetail: React.FC = () => {
 
       if (existingItemIndex > -1) {
         // Update quantity
-        cart[existingItemIndex].quantity += quantity;
+        const newQuantity = cart[existingItemIndex].quantity + quantity;
+        if (newQuantity > product.quantity) {
+          toast.error(`Cannot add ${quantity} more! Only ${product.quantity} items available in stock`);
+          return;
+        }
+        cart[existingItemIndex].quantity = newQuantity;
       } else {
         // Add new item
         cart.push({
@@ -105,6 +123,7 @@ const CartridgeDetail: React.FC = () => {
           unit_price: product.unit_price,
           special_price: product.special_price,
           quantity: quantity,
+          max_quantity: product.quantity,
           addedAt: new Date().toISOString(),
         });
       }
@@ -118,6 +137,18 @@ const CartridgeDetail: React.FC = () => {
   const handleBuyNow = () => {
     if (!product) return;
 
+    // Check if product is out of stock
+    if (product.quantity <= 0) {
+      toast.error("This product is out of stock");
+      return;
+    }
+
+    // Check if requested quantity exceeds available stock
+    if (quantity > product.quantity) {
+      toast.error(`Only ${product.quantity} items available in stock`);
+      return;
+    }
+
     // Navigate to checkout with product data
     navigate("/eg/checkout", {
       state: {
@@ -129,7 +160,11 @@ const CartridgeDetail: React.FC = () => {
   };
 
   const incrementQuantity = () => {
-    setQuantity((prev) => prev + 1);
+    if (product && quantity < product.quantity) {
+      setQuantity((prev) => prev + 1);
+    } else if (product) {
+      toast.error(`Maximum quantity reached! Only ${product.quantity} items available in stock`);
+    }
   };
 
   const decrementQuantity = () => {
@@ -168,9 +203,12 @@ const CartridgeDetail: React.FC = () => {
     );
   }
 
-  const displayPrice = product.special_price || product.unit_price;
-  const hasDiscount = product.special_price && product.special_price < product.unit_price;
-  const savings = hasDiscount ? product.unit_price - product.special_price : 0;
+  const userIsDistributor = isDistributor();
+  const displayPrice = userIsDistributor && product.special_price 
+    ? product.special_price 
+    : product.unit_price;
+  const hasDiscount = userIsDistributor && product.special_price && product.special_price < product.unit_price;
+  const savings = hasDiscount && product.special_price ? product.unit_price - product.special_price : 0;
 
   return (
     <div className="min-h-screen bg-white">
@@ -209,12 +247,36 @@ const CartridgeDetail: React.FC = () => {
             </h1>
 
             {/* Model Number */}
-            <p className="text-gray-600 text-lg mb-6">
+            <p className="text-gray-600 text-lg mb-4">
               Model: <span className="font-semibold">{product.model_number}</span>
             </p>
 
+            {/* Stock Status */}
+            <div className="mb-6">
+              {product.quantity > 0 ? (
+                <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 px-4 py-2 rounded-lg">
+                  <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-green-700 font-semibold">In Stock - {product.quantity} available</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-2 bg-red-50 border border-red-200 px-4 py-2 rounded-lg">
+                  <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-red-700 font-semibold">Out of Stock</span>
+                </div>
+              )}
+            </div>
+
             {/* Price */}
             <div className="mb-6">
+              {hasDiscount && (
+                <div className="bg-green-50 border-2 border-green-200 rounded-xl px-4 py-3 mb-4 inline-block">
+                  <p className="text-green-700 text-sm font-bold">🎉 Distributor Special Price - Save Rs. {savings.toLocaleString()}</p>
+                </div>
+              )}
               <div className="flex items-baseline gap-4">
                 <p className="text-4xl font-bold text-[#1e3a8a]">
                   Rs. {displayPrice.toLocaleString()}
@@ -225,11 +287,6 @@ const CartridgeDetail: React.FC = () => {
                   </p>
                 )}
               </div>
-              {hasDiscount && (
-                <div className="mt-2 inline-block bg-red-100 text-red-700 px-4 py-2 rounded-lg">
-                  <p className="font-semibold">Save Rs. {savings.toLocaleString()}</p>
-                </div>
-              )}
             </div>
 
             {/* Description */}
@@ -240,11 +297,14 @@ const CartridgeDetail: React.FC = () => {
 
             {/* Quantity Selector */}
             <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Quantity</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                Quantity {product.quantity > 0 && <span className="text-sm text-gray-500 font-normal">(Max: {product.quantity})</span>}
+              </h3>
               <div className="flex items-center gap-4">
                 <button
                   onClick={decrementQuantity}
-                  className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
+                  disabled={product.quantity <= 0}
+                  className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
@@ -255,7 +315,8 @@ const CartridgeDetail: React.FC = () => {
                 </span>
                 <button
                   onClick={incrementQuantity}
-                  className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
+                  disabled={product.quantity <= 0 || quantity >= product.quantity}
+                  className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -268,15 +329,17 @@ const CartridgeDetail: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <button
                 onClick={handleAddToCart}
-                className="flex-1 bg-white border-2 border-[#1e3a8a] text-[#1e3a8a] px-8 py-4 rounded-full font-bold text-lg hover:bg-[#1e3a8a] hover:text-white transition-all duration-300"
+                disabled={product.quantity <= 0}
+                className="flex-1 bg-white border-2 border-[#1e3a8a] text-[#1e3a8a] px-8 py-4 rounded-full font-bold text-lg hover:bg-[#1e3a8a] hover:text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[#1e3a8a]"
               >
-                Add to Cart
+                {product.quantity <= 0 ? "Out of Stock" : "Add to Cart"}
               </button>
               <button
                 onClick={handleBuyNow}
-                className="flex-1 bg-[#1e3a8a] text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-[#1e40af] transition-all duration-300 shadow-lg hover:shadow-xl"
+                disabled={product.quantity <= 0}
+                className="flex-1 bg-[#1e3a8a] text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-[#1e40af] transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Buy Now
+                {product.quantity <= 0 ? "Out of Stock" : "Buy Now"}
               </button>
             </div>
 

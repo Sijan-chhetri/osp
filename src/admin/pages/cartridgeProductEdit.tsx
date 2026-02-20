@@ -33,6 +33,7 @@ const CartridgeProductEdit: FC = () => {
   const [categoryId, setCategoryId] = useState("");
   const [unitPrice, setUnitPrice] = useState("");
   const [specialPrice, setSpecialPrice] = useState("");
+  const [quantity, setQuantity] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -78,6 +79,7 @@ const CartridgeProductEdit: FC = () => {
         setCategoryId(product.category_id);
         setUnitPrice(product.unit_price.toString());
         setSpecialPrice(product.special_price ? product.special_price.toString() : "");
+        setQuantity(product.quantity !== undefined ? product.quantity.toString() : "");
         setIsActive(product.is_active);
       }
 
@@ -110,6 +112,7 @@ const CartridgeProductEdit: FC = () => {
         description: description.trim() || null,
         unit_price: parseFloat(unitPrice),
         special_price: specialPrice ? parseFloat(specialPrice) : null,
+        quantity: quantity ? parseInt(quantity) : 0,
         is_active: isActive,
       };
 
@@ -299,6 +302,24 @@ const CartridgeProductEdit: FC = () => {
               </div>
             </div>
 
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-brown">
+                Quantity (Stock) - Optional
+              </label>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                min="0"
+                step="1"
+                placeholder="100"
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#6E4294]"
+              />
+              <p className="text-xs text-brownSoft">
+                Available stock quantity (defaults to 0 if not specified)
+              </p>
+            </div>
+
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-brown">Active</p>
@@ -347,6 +368,30 @@ const CartridgeProductEdit: FC = () => {
 
             {qrCode ? (
               <div className="space-y-4">
+                {/* QR Code Image */}
+                <div className="flex justify-center bg-slate-50 p-4 rounded-lg">
+                  <img
+                    src={API_ENDPOINTS.CARTRIDGE_QR_IMAGE(id!)}
+                    alt="QR Code"
+                    className="w-48 h-48 object-contain border-2 border-slate-200 rounded-lg bg-white p-2"
+                    onError={(e) => {
+                      e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192"><rect width="192" height="192" fill="%23f3f4f6"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%239ca3af" font-size="16">QR Code Not Available</text></svg>';
+                    }}
+                  />
+                </div>
+
+                {/* Download Button */}
+                <a
+                  href={API_ENDPOINTS.CARTRIDGE_QR_IMAGE(id!)}
+                  download={`QR-${modelNumber}.png`}
+                  className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download QR Code
+                </a>
+
                 <div className="bg-slate-50 p-4 rounded-lg">
                   <p className="text-xs text-brownSoft mb-1">QR Value</p>
                   <p className="font-mono text-sm break-all text-brown">{qrCode.qr_value}</p>

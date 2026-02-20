@@ -19,6 +19,8 @@ import EgFooter from './components/eg/egFooter'
 import CartridgeDetail from './pages/eg/CartridgeDetail'
 import CartridgeCart from './pages/eg/CartridgeCart'
 import CartridgeCheckout from './pages/eg/CartridgeCheckout'
+import MyOrders from './pages/osp/MyOrders'
+import MyCartridgeOrders from './pages/eg/MyCartridgeOrders'
 
 import AdminRoute from "./components/AdminRoute.tsx";
 import AdminLayout from "./admin/layouts/AdminLayout.tsx";
@@ -27,6 +29,7 @@ import SoftwareCategories from "./admin/pages/softwareCategoryList.tsx";
 import SoftwareCategoryCreate from "./admin/pages/softwareCategoryCreate.tsx";
 import SoftwareBrands from "./admin/pages/softwareBrandList.tsx";
 import SoftwareBrandCreate from "./admin/pages/softwareBrandCreate.tsx";
+import SoftwareBrandEdit from "./admin/pages/softwareBrandEdit.tsx";
 import SoftwareProducts from "./admin/pages/softwareProductList.tsx";
 import SoftwareProductCreate from "./admin/pages/softwareProductCreate.tsx";
 import SoftwarePlanList from "./admin/pages/softwarePlanList.tsx";
@@ -96,6 +99,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         {/* User Profile Route */}
         <Route path="/profile" element={<UserProfile />} />
+        {/* My Orders Route */}
+        <Route path="/my-orders" element={<MyOrders />} />
         {/* Cart Route */}
         <Route path="/cart" element={<Cart />} />
         {/* Services Route */}
@@ -119,6 +124,8 @@ function App() {
         <Route path="/eg/cart" element={<CartridgeCart />} />
         {/* EG Checkout Route */}
         <Route path="/eg/checkout" element={<CartridgeCheckout />} />
+        {/* EG My Orders Route */}
+        <Route path="/eg/my-orders" element={<MyCartridgeOrders />} />
 
         <Route path="/login" element={<Login />} />
 
@@ -150,6 +157,7 @@ function App() {
               path="softwareBrandCreate"
               element={<SoftwareBrandCreate />}
             />
+            <Route path="edit/:id" element={<SoftwareBrandEdit />} />
           </Route>
 
           <Route path="products">

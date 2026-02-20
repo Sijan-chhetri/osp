@@ -8,7 +8,36 @@ const CartridgeBrandCreate: FC = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+      if (!validTypes.includes(file.type)) {
+        toast.error("Please upload a valid image file (JPEG, PNG, GIF, WebP)");
+        return;
+      }
+
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size must be less than 5MB");
+        return;
+      }
+
+      setImage(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,20 +47,28 @@ const CartridgeBrandCreate: FC = () => {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("You are not authenticated.");
 
-      const payload = { name: name.trim(), is_active: isActive };
-
-      if (!payload.name) {
+      if (!name.trim()) {
         toast.error("Brand name is required");
         return;
       }
 
+      if (!image) {
+        toast.error("Brand image is required");
+        return;
+      }
+
+      // Create FormData for multipart/form-data
+      const formData = new FormData();
+      formData.append("name", name.trim());
+      formData.append("is_active", String(isActive));
+      formData.append("image", image);
+
       const response = await fetch(API_ENDPOINTS.CARTRIDGE_BRANDS, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       const data = await response.json();
@@ -40,6 +77,8 @@ const CartridgeBrandCreate: FC = () => {
         toast.success("Brand created successfully ✨");
         setName("");
         setIsActive(true);
+        setImage(null);
+        setImagePreview(null);
         navigate("/admin/cartridge/brands");
       } else {
         toast.error(data.message || "Failed to create brand");
@@ -72,6 +111,34 @@ const CartridgeBrandCreate: FC = () => {
             placeholder="e.g. HP"
             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#6E4294]"
           />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-brown">
+            Brand Image <span className="text-red-500">*</span>
+          </label>
+          <p className="text-xs text-brownSoft mb-2">
+            Upload brand logo (JPEG, PNG, GIF, WebP - Max 5MB)
+          </p>
+          
+          <input
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+            onChange={handleImageChange}
+            required
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#6E4294]"
+          />
+          
+          {imagePreview && (
+            <div className="mt-3">
+              <p className="text-xs text-brownSoft mb-2">Preview:</p>
+              <img
+                src={imagePreview}
+                alt="Brand preview"
+                className="w-32 h-32 object-contain border border-slate-200 rounded-lg p-2"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between">
