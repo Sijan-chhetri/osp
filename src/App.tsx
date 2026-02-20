@@ -19,6 +19,9 @@ import EgFooter from './components/eg/egFooter'
 import CartridgeDetail from './pages/eg/CartridgeDetail'
 import CartridgeCart from './pages/eg/CartridgeCart'
 import CartridgeCheckout from './pages/eg/CartridgeCheckout'
+import CartridgeShop from "./pages/eg/CartridgeShop";
+import CartridgeContact from "./pages/eg/CartridgeContact";
+import CartridgeAbout from "./pages/eg/CartridgeAbout";
 
 import AdminRoute from "./components/AdminRoute.tsx";
 import AdminLayout from "./admin/layouts/AdminLayout.tsx";
@@ -61,7 +64,6 @@ import DistributorList from "./admin/pages/distributorList.tsx";
 
 function App() {
   return (
-    
     <Router>
       <Routes>
         {/* OSP Home Page Route */}
@@ -98,8 +100,7 @@ function App() {
         <Route path="/profile" element={<UserProfile />} />
         {/* Cart Route */}
         <Route path="/cart" element={<Cart />} />
-        {/* Services Route */}
-        <Route path="/services" element={<Services />} />
+
         {/* Ink Fill Route */}
         <Route path="/ink-fill" element={<InkFill />} />
         {/* EG Cartridge Page Route */}
@@ -113,6 +114,19 @@ function App() {
             </>
           }
         />
+
+        {/* EG Shop Route */}
+        <Route path="/eg/shop" element={<CartridgeShop />} />
+
+        {/* Services Route */}
+        <Route path="/eg/services" element={<Services />} />
+
+        {/* About Route */}
+        <Route path="/eg/about" element={<CartridgeAbout />} />
+
+        {/* Contact Route */}
+        <Route path="/eg/contact" element={<CartridgeContact />} />
+
         {/* EG Cartridge Detail Route */}
         <Route path="/eg/cartridge/:id" element={<CartridgeDetail />} />
         {/* EG Cart Route */}
