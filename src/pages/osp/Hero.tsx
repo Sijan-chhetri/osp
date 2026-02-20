@@ -1,5 +1,7 @@
 import React from "react";
-import { useBrands } from "../../hooks/icon"; // Import the icons hook
+import { useBrands } from "../../hooks/icon";
+import { MdOutlineHeadsetMic } from "react-icons/md";
+import { motion } from "framer-motion";
 
 interface BrandItem {
   name: string;
@@ -33,76 +35,123 @@ const BrandIcon: React.FC<BrandItem> = ({ name, color, bgColor, icon }) => {
   );
 };
 
+const fadeUpContainer = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.6, // starts shortly after h2 animation
+    },
+  },
+};
+
+const fadeUpItem = {
+  hidden: { y: 30, opacity: 0 },
+  show: { y: 0, opacity: 1 },
+};
+
 const Hero: React.FC = () => {
-  const brands = useBrands(); // Use the icons hook
+  const brands = useBrands();
 
   return (
     <section
       id="hero"
-      className="relative w-full min-h-screen bg-[#482072] flex flex-col items-center overflow-hidden"
+      className="relative w-full min-h-screen bg-[#482072] overflow-hidden"
     >
-      {/* Navbar */}
-      {/* <Navbar /> */}
-
-      {/* Hero Content - Ellipse White Container */}
+      {/* Responsive glowing circle background */}
       <div
-        className="relative z-10 flex flex-col items-center justify-start w-full"
-        style={{ height: "900px" }}
-      >
-        <div
-          className="bg-white flex flex-col items-center justify-start absolute overflow-hidden"
-          style={{
-            width: "1711px",
-            height: "1122px",
-            top: "119px",
-            left: "-136px",
-            borderRadius: "50%",
-            boxShadow:
-              "0px -20px 33px 0px #FFFFFF42, 0px -40px 60px 20px #FFFFFF30, 0px -60px 80px 40px #FFFFFF20, inset 0px 20px 40px 0px rgba(255, 255, 255, 0.15), inset 0px 40px 70px 15px rgba(72, 32, 114, 0.3), inset 0px 80px 120px 40px rgba(72, 32, 114, 0.4), inset 0px 120px 160px 80px rgba(72, 32, 114, 0.25)",
-          }}
-        >
-          <div className="flex flex-col items-center justify-start w-full pt-20 px-6">
-            <span className="text-white text-base mb-6 px-8 py-1 border-2 border-white rounded-full relative z-20 font-medium bg-[#482072]/25 flex items-center gap-2 backdrop-blur-md">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
-              </svg>
-              Trusted by 500+ Customers
-            </span>
+        className="pointer-events-none absolute left-1/2 top-[120px] -translate-x-1/2
+                    w-[1100px] h-[1100px]
+                    sm:w-[1400px] sm:h-[1400px]
+                    lg:w-[1750px] lg:h-[1750px]
+                    rounded-full bg-white"
+        style={{
+          boxShadow:
+            "0px -20px 33px 0px #FFFFFF42, 0px -40px 60px 20px #FFFFFF30, 0px -60px 80px 40px #FFFFFF20, inset 0px 20px 40px 0px rgba(255, 255, 255, 0.15), inset 0px 40px 70px 15px rgba(72, 32, 114, 0.3), inset 0px 80px 120px 40px rgba(72, 32, 114, 0.4), inset 0px 120px 160px 80px rgba(72, 32, 114, 0.25)",
+        }}
+      />
 
-            <h1 className="text-4xl md:text-4xl font-bold text-[#482072] mb-2 text-center max-w-2xl relative z-20">
-              Power Your Digital World with
-            </h1>
+      {/* Content container */}
+      <div className="relative z-10 w-full flex flex-col items-center px-4 sm:px-6 lg:px-8 pt-36 md:pt-52 pb-16">
+        <div className="w-full max-w-6xl mx-auto flex flex-col items-center">
+          {/* Trust pill */}
+          <span className="text-white text-sm sm:text-base mb-6 px-6 sm:px-8 py-1.5 border-2 border-white rounded-full font-medium bg-[#482072]/25 flex items-center gap-2 backdrop-blur-md">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+            </svg>
+            Trusted by 500+ Customers
+          </span>
 
-            <h2 className="text-5xl md:text-7xl font-extrabold text-[#6E4294] mb-6 text-center max-w-2xl relative z-20">
-              Genuine Software
-            </h2>
+          {/* Headings */}
 
-            <p className="text-[#727272] max-w-2xl mb-8 text-center text-lg relative z-20">
+          <motion.h1
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#482072] mb-2 text-center max-w-3xl"
+          >
+            Power Your Digital World with
+          </motion.h1>
+
+          <motion.h2
+            initial={{ y: 40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.9, ease: "easeOut", delay: 0.3 }}
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-[#6E4294] mb-6 text-center max-w-3xl"
+          >
+            Genuine Software
+          </motion.h2>
+
+          <motion.div
+            variants={fadeUpContainer}
+            initial="hidden"
+            animate="show"
+            className="flex flex-col items-center w-full"
+          >
+            {/* Description */}
+            <motion.p
+              variants={fadeUpItem}
+              className="text-[#727272] max-w-3xl mb-8 text-center text-base sm:text-lg"
+            >
               Get 100% genuine licenses for productivity, security, creativity,
               and business tools — delivered instantly with dedicated customer
               support.
-            </p>
+            </motion.p>
 
-            {/* Hero Buttons */}
-            <div className="flex gap-4 flex-wrap justify-center mb-12 relative z-20">
-              <button className="bg-[#6E4294] text-white px-8 py-3 rounded-xl shadow-2xl hover:shadow-xl hover:scale-105 transition-all duration-200 font-semibold">
+            {/* Buttons */}
+            <motion.div
+              variants={fadeUpItem}
+              className="flex flex-col sm:flex-row gap-4 justify-center mb-10 w-full sm:w-auto"
+            >
+              <button className="bg-[#6E4294] text-white px-8 py-3 rounded-xl shadow-2xl hover:shadow-xl hover:scale-[1.02] transition-all duration-200 font-semibold w-full sm:w-auto">
                 Get Your License →
               </button>
-              <button className="bg-transparent border-2 border-[#6E4294] text-[#6E4294] px-8 py-3 rounded-xl hover:bg-[#7B5DE8]/10 transition-all duration-200 font-semibold">
+              <button className="bg-transparent border-2 border-[#6E4294] text-[#6E4294] px-8 py-3 rounded-xl hover:bg-[#7B5DE8]/10 transition-all duration-200 font-semibold w-full sm:w-auto">
                 Browse Products
               </button>
-            </div>
+            </motion.div>
 
-            {/* Features Section */}
-            <div className="flex gap-8 flex-wrap justify-center relative z-20">
+            {/* Features */}
+            <motion.div
+              variants={fadeUpItem}
+              className="flex gap-6 sm:gap-8 flex-wrap justify-center"
+            >
+              {/* Feature 1 */}
               <div className="flex items-center gap-3">
                 <div className="bg-[#7B5DE8]/20 p-3 rounded-lg">
                   <svg
-                    className="w-6 h-6 text-[#6E4294]"
-                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
                     viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-6 h-6 text-[#6E4294]"
                   >
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z"
+                    />
                   </svg>
                 </div>
                 <div>
@@ -111,15 +160,10 @@ const Hero: React.FC = () => {
                 </div>
               </div>
 
+              {/* Feature 2 */}
               <div className="flex items-center gap-3">
                 <div className="bg-[#7B5DE8]/20 p-3 rounded-lg">
-                  <svg
-                    className="w-6 h-6 text-[#6E4294]"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" />
-                  </svg>
+                  <MdOutlineHeadsetMic className="w-6 h-6 text-[#6E4294]" />
                 </div>
                 <div>
                   <p className="font-semibold text-[#6E4294]">24/7 Support</p>
@@ -127,14 +171,22 @@ const Hero: React.FC = () => {
                 </div>
               </div>
 
+              {/* Feature 3 */}
               <div className="flex items-center gap-3">
                 <div className="bg-[#7B5DE8]/20 p-3 rounded-lg">
                   <svg
-                    className="w-6 h-6 text-[#6E4294]"
-                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
                     viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-6 h-6 text-[#6E4294]"
                   >
-                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"
+                    />
                   </svg>
                 </div>
                 <div>
@@ -142,24 +194,28 @@ const Hero: React.FC = () => {
                   <p className="text-[#7E6995] text-sm">Happy Customers</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
+          </motion.div>
 
-            {/* Available Software Brands Section */}
-            <div className="relative z-20 mt-12 w-full flex flex-col items-center justify-center">
-              <h1 className="text-center text-[#6E4294] font-bold text-3xl mb-8 animate-fade-in">
-                AVAILABLE SOFTWARE BRANDS
-              </h1>
-              <div className="relative overflow-hidden w-full max-w-5xl mx-auto">
-                <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
-                <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
-                <div className="flex gap-10 animate-scroll-infinite">
-                  {brands.map((brand, index) => (
-                    <BrandIcon key={`brand-${index}`} {...brand} />
-                  ))}
-                  {brands.map((brand, index) => (
-                    <BrandIcon key={`brand-duplicate-${index}`} {...brand} />
-                  ))}
-                </div>
+          {/* Brands marquee */}
+          <div className="mt-12 w-full flex flex-col items-center">
+            <h1 className="text-center text-[#6E4294] font-bold text-2xl sm:text-3xl mb-6">
+              AVAILABLE SOFTWARE BRANDS
+            </h1>
+
+            <div className="relative overflow-hidden w-full max-w-5xl mx-auto">
+              {/* Fade edges */}
+              <div className="absolute inset-y-0 left-0 w-12 sm:w-16 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+              <div className="absolute inset-y-0 right-0 w-12 sm:w-16 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+
+              {/* Scrolling row */}
+              <div className="flex gap-10 animate-scroll-infinite py-2">
+                {brands.map((brand, index) => (
+                  <BrandIcon key={`brand-${index}`} {...brand} />
+                ))}
+                {brands.map((brand, index) => (
+                  <BrandIcon key={`brand-dup-${index}`} {...brand} />
+                ))}
               </div>
             </div>
           </div>

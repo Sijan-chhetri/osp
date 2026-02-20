@@ -6,6 +6,12 @@ import StepCard from "../../components/osp/stepcard";
 import { API_ENDPOINTS } from "../../api/api";
 import { getAuthToken, isDistributor } from "../../utils/auth";
 
+import {
+  CursorArrowRaysIcon,
+  ChatBubbleLeftRightIcon,
+  KeyIcon,
+} from "@heroicons/react/24/outline";
+
 interface BrandFromAPI {
   id: string;
   name: string;
@@ -53,10 +59,10 @@ interface SoftwareItem {
 }
 
 interface StepItem {
-  number: number;
+  number: string;
   title: string;
   description: string;
-  icon: string;
+  icon: React.ReactNode;
 }
 
 const SoftwareCard: React.FC<SoftwareItem & { onSeeOptions: () => void }> = ({ 
@@ -305,22 +311,25 @@ const Software: React.FC = () => {
 
   const steps: StepItem[] = [
     {
-      number: 1,
+      number: "01",
       title: "Select Your Software",
-      description: "Choose from our wide range of genuine software products and click 'Buy Now'",
-      icon: "👆",
+      description:
+        "Choose from our wide range of genuine software products and click 'Buy Now'",
+      icon: <CursorArrowRaysIcon className="w-7 h-7" />,
     },
     {
-      number: 2,
+      number: "02",
       title: "Message Us on WhatsApp",
-      description: "You'll be directed to WhatsApp where our team will assist you with your order",
-      icon: "💬",
+      description:
+        "You'll be directed to WhatsApp where our team will assist you with your order",
+      icon: <ChatBubbleLeftRightIcon className="w-7 h-7" />,
     },
     {
-      number: 3,
+      number: "03",
       title: "Receive Your License",
-      description: "Get your software license instantly after payment confirmation",
-      icon: "🔑",
+      description:
+        "Get your software license instantly after payment confirmation",
+      icon: <KeyIcon className="w-7 h-7" />,
     },
   ];
 
@@ -342,7 +351,7 @@ const Software: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
-            <div className="bg-[#482072] px-8 py-6 flex items-center justify-between">
+            <div className="bg-[#6E4294] px-8 py-6 flex items-center justify-between">
               <h2 className="text-3xl font-bold text-white">
                 {products[0]?.brand_name || "Products"}
               </h2>
@@ -357,8 +366,16 @@ const Software: React.FC = () => {
             {/* Cart Success Message */}
             {cartMessage && (
               <div className="mx-8 mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-green-700 text-sm flex items-center gap-2">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 {cartMessage}
               </div>
@@ -369,7 +386,10 @@ const Software: React.FC = () => {
               {loadingProducts ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="border-2 border-gray-200 rounded-lg p-6 animate-pulse">
+                    <div
+                      key={i}
+                      className="border-2 border-gray-200 rounded-lg p-6 animate-pulse"
+                    >
                       <div className="flex flex-col items-center mb-4">
                         <div className="w-20 h-20 bg-gray-200 rounded mb-3"></div>
                         <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
@@ -404,10 +424,12 @@ const Software: React.FC = () => {
                             />
                           </div>
                         )}
-                        <h3 className="text-lg font-bold text-[#482072] text-center mb-2">
+                        <h3 className="text-lg font-bold text-[#6E4294] text-center mb-2">
                           {product.name}
                         </h3>
-                        <p className="text-gray-600 text-sm text-center mb-3">{product.description}</p>
+                        <p className="text-gray-600 text-sm text-center mb-3">
+                          {product.description}
+                        </p>
                         <span className="inline-block bg-purple-100 text-[#7B5DE8] px-3 py-1 rounded text-xs font-semibold">
                           {product.category_name}
                         </span>
@@ -418,20 +440,24 @@ const Software: React.FC = () => {
                         {product.plans.map((plan) => {
                           // Determine which price to display
                           const userIsDistributor = isDistributor();
-                          const displayPrice = userIsDistributor && plan.special_price 
-                            ? plan.special_price 
-                            : plan.price;
-                          const showOriginalPrice = userIsDistributor && plan.special_price;
+                          const displayPrice =
+                            userIsDistributor && plan.special_price
+                              ? plan.special_price
+                              : plan.price;
+                          const showOriginalPrice =
+                            userIsDistributor && plan.special_price;
 
                           return (
                             <div
                               key={plan.id}
                               className="bg-gray-50 border border-gray-200 rounded p-4"
                             >
-                              <h4 className="font-bold text-[#482072] mb-1 text-sm">
+                              <h4 className="font-bold text-[#6E4294] mb-1 text-sm">
                                 {plan.plan_name}
                               </h4>
-                              <p className="text-xs text-gray-600 mb-2">{plan.features}</p>
+                              <p className="text-xs text-gray-600 mb-2">
+                                {plan.features}
+                              </p>
                               <div className="flex items-center justify-between mb-3">
                                 <span className="text-xs text-gray-500 capitalize bg-white px-2 py-1 rounded border border-gray-200">
                                   {plan.duration_type}
@@ -453,15 +479,15 @@ const Software: React.FC = () => {
                                 </div>
                               </div>
                               <div className="space-y-2">
-                                <button 
+                                <button
                                   onClick={() => handleBuyNow(product, plan)}
-                                  className="w-full bg-[#7B5DE8] text-white py-2 rounded font-semibold text-sm hover:bg-[#6A4BC4] transition-all"
+                                  className="w-full bg-[#6E4294] text-white py-2 rounded font-semibold text-sm hover:bg-[#6E4294]/90 transition-all"
                                 >
                                   Buy Now
                                 </button>
-                                <button 
+                                <button
                                   onClick={() => addToCart(product, plan)}
-                                  className="w-full bg-white border-2 border-[#7B5DE8] text-[#7B5DE8] py-2 rounded font-semibold text-sm hover:bg-[#7B5DE8] hover:text-white transition-all"
+                                  className="w-full bg-white border-2 border-[#6E4294] text-[#6E4294] py-2 rounded font-semibold text-sm hover:bg-[#6E4294] hover:text-white transition-all"
                                 >
                                   Add to Cart
                                 </button>
@@ -480,17 +506,21 @@ const Software: React.FC = () => {
       )}
 
       {/* Software Section */}
-      <section id="products" className="relative w-full bg-white flex flex-col items-center py-5 px-4">
+      <section
+        id="products"
+        className="relative w-full bg-white flex flex-col items-center py-5 px-4"
+      >
         {/* Navbar */}
         <Navbar />
 
         {/* Header */}
         <div className="text-center mb-16 px-6 pt-5">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-            Our <span className="text-[#7B5DE8]">Software Products</span>
+            Our <span className="text-[#6E4294]">Software Products</span>
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-            Browse our extensive collection of genuine software solutions at the best prices in Nepal.
+            Browse our extensive collection of genuine software solutions at the
+            best prices in Nepal.
           </p>
         </div>
 
@@ -504,7 +534,10 @@ const Software: React.FC = () => {
                   showAll && index >= 6 ? "animate-fade-in-up" : ""
                 }`}
               >
-                <SoftwareCard {...product} onSeeOptions={() => handleSeeOptions(product.id)} />
+                <SoftwareCard
+                  {...product}
+                  onSeeOptions={() => handleSeeOptions(product.id)}
+                />
               </div>
             ))}
           </div>
@@ -513,7 +546,7 @@ const Software: React.FC = () => {
         {/* Show All Button */}
         <button
           onClick={() => setShowAll(!showAll)}
-          className="bg-[#7B5DE8] text-white px-12 py-3 rounded-full font-semibold hover:bg-[#6A4BC4] transition-all duration-300 transform hover:scale-105"
+          className="bg-[#6E4294] text-white px-12 py-3 rounded-full font-semibold hover:bg-[#6A4BC4] transition-all duration-300 transform hover:scale-105"
         >
           {showAll ? "Show Less" : "Show All"}
         </button>
@@ -524,7 +557,8 @@ const Software: React.FC = () => {
         id="how-it-works"
         className="relative w-full flex flex-col items-center py-20 px-4"
         style={{
-          background: "linear-gradient(to bottom, #482072 0%, #482072 30%, #ffffff 100%)",
+          background:
+            "linear-gradient(to bottom, #482072 0%, #482072 30%, #ffffff 100%)",
         }}
       >
         {/* Header */}
@@ -533,13 +567,14 @@ const Software: React.FC = () => {
             Get Your Software in 3 Simple Steps
           </h1>
           <p className="text-white/80 max-w-2xl mx-auto text-lg">
-            Browse our extensive collection of genuine software solutions at the best prices in Nepal.
+            Browse our extensive collection of genuine software solutions at the
+            best prices in Nepal.
           </p>
         </div>
 
         {/* Steps Grid */}
-        <div className="w-[70%] px-4 md:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 items-stretch">
             {steps.map((step) => (
               <StepCard key={step.number} {...step} />
             ))}
