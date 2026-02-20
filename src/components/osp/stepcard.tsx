@@ -1,38 +1,47 @@
 import React from "react";
 
-interface StepItem {
-  number: number;
+export interface StepItem {
+  number: string;
   title: string;
   description: string;
-  icon: string;
+  icon: React.ReactNode;
 }
 
 const StepCard: React.FC<StepItem> = ({ number, title, description, icon }) => {
   return (
-    <div className="relative group h-full">
-      {/* BIG Background Number */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <span className="text-[140px] md:text-[180px] font-extrabold text-white/10 select-none">
-          {number}
-        </span>
-      </div>
+    <div className="h-full">
+      {/* Outer white frame */}
+      <div className="h-full rounded-[28px] sm:rounded-[34px] bg-white/80 p-[5px] sm:p-[6px] shadow-[0_18px_45px_rgba(0,0,0,0.15)]">
+        {/* Inner card */}
+        <div className="relative h-full rounded-[22px] sm:rounded-[28px] bg-[#482072]/55 backdrop-blur-md border border-white/55 px-6 sm:px-8 py-8 sm:py-10 overflow-hidden flex flex-col">
+          {/* Big faint number */}
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <span className="text-[90px] sm:text-[110px] md:text-[130px] font-extrabold text-white/20 leading-none select-none">
+              {number}
+            </span>
+          </div>
 
-      {/* Purple Glass Card */}
-      <div className="relative backdrop-blur-xl bg-[#7B5DE8]/20 border-[7px] border-white rounded-3xl p-10 h-full flex flex-col items-center text-center transition-all duration-300 hover:bg-[#7B5DE8]/30 hover:shadow-[0_0_40px_rgba(123,93,232,0.35)]">
-        {/* Icon */}
-        <div className="text-5xl mb-6">{icon}</div>
+          {/* Content */}
+          <div className="relative z-10 flex flex-col items-center text-center flex-1">
+            {/* Icon */}
+            <div className="mb-5 sm:mb-6 rounded-2xl bg-[#482072]/25 p-3 sm:p-4 shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 text-[#482072]">{icon}</div>
+            </div>
 
-        {/* Title */}
-        <h3 className="text-[#6E4294] text-xl font-bold mb-3">{title}</h3>
+            {/* Title (fixed height so all cards match) */}
+            <h3 className="text-[#5a2d86] font-extrabold text-xl sm:text-2xl mb-3 min-h-[56px] sm:min-h-[64px] flex items-center justify-center">
+              {title}
+            </h3>
 
-        {/* Description */}
-        <p className="text-white/85 text-sm leading-relaxed max-w-xs font-semibold">
-          {description}
-        </p>
+            {/* Description grows evenly */}
+            <p className="text-white/90 text-base sm:text-lg leading-relaxed max-w-md flex-1">
+              {description}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
-
 
 export default StepCard;
