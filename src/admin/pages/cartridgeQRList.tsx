@@ -18,6 +18,7 @@ const CartridgeQRList: FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | "active" | "inactive">("all");
+  const [viewingQR, setViewingQR] = useState<QRCode | null>(null);
 
   const ITEMS_PER_PAGE = 5;
   const [currentPage, setCurrentPage] = useState(1);
@@ -137,6 +138,7 @@ const CartridgeQRList: FC = () => {
         <table className="min-w-[900px] w-full text-sm">
           <thead className="bg-slate-50 text-brown">
             <tr>
+              <th className="px-5 py-3 text-left">QR Code</th>
               <th className="px-5 py-3 text-left">QR Value</th>
               <th className="px-5 py-3 text-left">Product ID</th>
               <th className="px-5 py-3 text-left">Status</th>
@@ -147,21 +149,32 @@ const CartridgeQRList: FC = () => {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={5} className="px-5 py-6 text-center">
+                <td colSpan={6} className="px-5 py-6 text-center">
                   Loading QR codes...
                 </td>
               </tr>
             )}
             {!loading && filteredQRCodes.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-5 py-6 text-center text-brownSoft">
+                <td colSpan={6} className="px-5 py-6 text-center text-brownSoft">
                   No QR codes found.
                 </td>
               </tr>
             )}
             {paginatedQRCodes.map((qr) => (
               <tr key={qr.id} className="border-t border-slate-100 hover:bg-slate-50 transition">
-                <td className="px-5 py-4 font-mono text-brown">{qr.qr_value}</td>
+                <td className="px-5 py-4">
+                  <img
+                    src={API_ENDPOINTS.CARTRIDGE_QR_IMAGE(qr.cartridge_product_id)}
+                    alt="QR Code"
+                    className="w-16 h-16 object-contain border border-slate-200 rounded cursor-pointer hover:scale-110 transition-transform"
+                    onClick={() => setViewingQR(qr)}
+                    onError={(e) => {
+                      e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="%23f3f4f6"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%239ca3af" font-size="12">No QR</text></svg>';
+                    }}
+                  />
+                </td>
+                <td className="px-5 py-4 font-mono text-brown text-xs">{qr.qr_value}</td>
                 <td className="px-5 py-4 text-brownSoft font-mono text-xs">
                   {qr.cartridge_product_id.substring(0, 8)}...
                 </td>
@@ -179,6 +192,12 @@ const CartridgeQRList: FC = () => {
                 </td>
                 <td className="px-5 py-4 text-right">
                   <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => setViewingQR(qr)}
+                      className="px-3 py-1.5 text-xs rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition"
+                    >
+                      View
+                    </button>
                     {qr.is_active ? (
                       <button
                         onClick={() => handleAction(qr.cartridge_product_id, "deactivate")}
@@ -234,6 +253,78 @@ const CartridgeQRList: FC = () => {
           </button>
         </div>
       </div>
+
+      {/* QR Code View Modal */}
+      {viewingQR && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-[#6E4294]">QR Code Details</h2>
+              <button
+                onClick={() => setViewingQR(null)}
+                className="text-gray-500 hover:text-gray-700 transition"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* QR Code Image */}
+              <div className="flex justify-center">
+                <img
+                  src={API_ENDPOINTS.CARTRIDGE_QR_IMAGE(viewingQR.cartridge_product_id)}
+                  alt="QR Code"
+                  className="w-64 h-64 object-contain border-2 border-slate-200 rounded-lg p-4 bg-white"
+                  onError={(e) => {
+                    e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="%23f3f4f6"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%239ca3af" font-size="20">QR Code Not Available</text></svg>';
+                  }}
+                />
+              </div>
+
+              {/* QR Details */}
+              <div className="space-y-3">
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-xs text-gray-600 mb-1">QR Value</p>
+                  <p className="font-mono text-sm text-gray-900 break-all">{viewingQR.qr_value}</p>
+                </div>
+
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-xs text-gray-600 mb-1">Product ID</p>
+                  <p className="font-mono text-sm text-gray-900 break-all">{viewingQR.cartridge_product_id}</p>
+                </div>
+
+                <div className="flex justify-between items-center bg-slate-50 rounded-lg p-4">
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Status</p>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        viewingQR.is_active ? "bg-green-100 text-green-700" : "bg-slate-200 text-slate-600"
+                      }`}
+                    >
+                      {viewingQR.is_active ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Created</p>
+                    <p className="text-sm text-gray-900">{new Date(viewingQR.created_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Download Button */}
+              <a
+                href={API_ENDPOINTS.CARTRIDGE_QR_IMAGE(viewingQR.cartridge_product_id)}
+                download={`QR-${viewingQR.qr_value}.png`}
+                className="block w-full bg-[#6E4294] text-white py-3 rounded-lg text-center font-semibold hover:bg-[#5a3578] transition"
+              >
+                Download QR Code
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
   CARTRIDGE_PRODUCT_DETAIL: (id: string) => `${API_BASE_URL}/cartridge/products/${id}`,
   CARTRIDGE_QR_ALL: `${API_BASE_URL}/cartridge/products/qr`,
   CARTRIDGE_QR_BY_PRODUCT: (productId: string) => `${API_BASE_URL}/cartridge/products/qr/${productId}`,
+  CARTRIDGE_QR_IMAGE: (productId: string) => `${API_BASE_URL}/cartridge/products/qr/image/${productId}`,
   CARTRIDGE_QR_DEACTIVATE: (productId: string) => `${API_BASE_URL}/cartridge/products/qr/${productId}/deactivate`,
   CARTRIDGE_QR_REACTIVATE: (productId: string) => `${API_BASE_URL}/cartridge/products/qr/${productId}/reactivate`,
   CARTRIDGE_QR_DELETE: (productId: string) => `${API_BASE_URL}/cartridge/products/qr/${productId}`,
@@ -48,6 +49,15 @@ export const API_ENDPOINTS = {
   // Software Brand Images
   SOFTWARE_BRAND_IMAGE: (path: string) => `${API_BASE_URL}/software/brands/image?path=${encodeURIComponent(path)}`,
   
+  // Cartridge Brand Images
+  CARTRIDGE_BRAND_IMAGE: (path: string) => `${API_BASE_URL}/cartridge/brands/image?path=${encodeURIComponent(path)}`,
+  
   // Activation Key
   ACTIVATION_REQUEST_KEY: `${API_BASE_URL}/activation/request-key`,
+  
+  // User Orders
+  USER_ORDERS: `${API_BASE_URL}/orders`,
+  USER_ORDER_DETAILS: (orderId: string) => `${API_BASE_URL}/orders/${orderId}`,
+  USER_CARTRIDGE_ORDERS: `${API_BASE_URL}/cartridge/orders/my-orders`,
+  USER_CARTRIDGE_ORDER_DETAILS: (orderId: string) => `${API_BASE_URL}/cartridge/orders/${orderId}`,
 };

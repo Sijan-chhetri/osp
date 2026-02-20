@@ -138,9 +138,10 @@ const CartridgeProductList: FC = () => {
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
-        <table className="min-w-[950px] w-full text-sm">
+        <table className="min-w-[1100px] w-full text-sm">
           <thead className="bg-slate-50 text-brown">
             <tr>
+              <th className="px-5 py-3 text-left">QR Code</th>
               <th className="px-5 py-3 text-left">Product Name</th>
               <th className="px-5 py-3 text-left">Model</th>
               <th className="px-5 py-3 text-left">Price</th>
@@ -152,16 +153,39 @@ const CartridgeProductList: FC = () => {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={6} className="px-5 py-6 text-center">Loading products...</td>
+                <td colSpan={7} className="px-5 py-6 text-center">Loading products...</td>
               </tr>
             )}
             {!loading && filteredProducts.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-6 text-center text-brownSoft">No products found.</td>
+                <td colSpan={7} className="px-5 py-6 text-center text-brownSoft">No products found.</td>
               </tr>
             )}
             {paginatedProducts.map((product) => (
               <tr key={product.id} className="border-t border-slate-100 hover:bg-slate-50 transition">
+                <td className="px-5 py-4">
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={API_ENDPOINTS.CARTRIDGE_QR_IMAGE(product.id)}
+                      alt="QR Code"
+                      className="w-16 h-16 object-contain border border-slate-200 rounded p-1 bg-white"
+                      onError={(e) => {
+                        e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="%23f3f4f6"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%239ca3af" font-size="10">No QR</text></svg>';
+                      }}
+                    />
+                    <a
+                      href={API_ENDPOINTS.CARTRIDGE_QR_IMAGE(product.id)}
+                      download={`QR-${product.model_number}.png`}
+                      className="p-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition"
+                      title="Download QR Code"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                    </a>
+                  </div>
+                </td>
                 <td className="px-5 py-4 font-medium text-brown">{product.product_name}</td>
                 <td className="px-5 py-4 text-brownSoft">{product.model_number}</td>
                 <td className="px-5 py-4 text-brown">

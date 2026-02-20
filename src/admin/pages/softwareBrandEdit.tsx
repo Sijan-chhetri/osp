@@ -1,9 +1,9 @@
-// src/admin/pages/softwareBrandCreate.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FC } from "react";
 import toast from "react-hot-toast";
 import { API } from "../../config/api.ts";
-import { useNavigate } from "react-router-dom";
+import { API_ENDPOINTS } from "../../api/api";
+import { useNavigate, useParams } from "react-router-dom";
 
 /* ================= TYPES ================= */
 
@@ -11,6 +11,8 @@ export type SoftwareBrand = {
   id: string;
   name: string;
   is_active: boolean;
+  thumbnail_url?: string | null;
+  original_url?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -26,14 +28,21 @@ const getErrorMessage = (err: unknown): string => {
 
 /* ================= COMPONENT ================= */
 
-const SoftwareBrandCreate: FC = () => {
+const SoftwareBrandEdit: FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
 
-  const [name, setName] = useState<SoftwareBrand["name"]>("");
-  const [isActive, setIsActive] = useState<SoftwareBrand["is_active"]>(true);
+  const [name, setName] = useState("");
+  const [isActive, setIsActive] = useState(true);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+
+  useEffect(() => {
+    fetchBrand();
+  }, [id]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -62,6 +71,33 @@ const SoftwareBrandCreate: FC = () => {
     }
   };
 
+  const fetchBrand = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API.BRANDS}/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const brand = data.brand || data;
+        setName(brand.name);
+        setIsActive(brand.is_active);
+        if (brand.thumbnail_url) {
+          setCurrentImageUrl(brand.thumbnail_url);
+        }
+      } else {
+        toast.error(data.message || "Failed to fetch brand");
+      }
+    } catch (err) {
+      toast.error("Error loading brand");
+      console.error(err);
+    } finally {
+      setFetching(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -75,19 +111,18 @@ const SoftwareBrandCreate: FC = () => {
         return;
       }
 
-      if (!image) {
-        toast.error("Brand image is required");
-        return;
-      }
-
       // Create FormData for multipart/form-data
       const formData = new FormData();
       formData.append("name", name.trim());
       formData.append("is_active", String(isActive));
-      formData.append("image", image);
+      
+      // Only append image if a new one is selected
+      if (image) {
+        formData.append("image", image);
+      }
 
-      const res = await fetch(API.BRANDS, {
-        method: "POST",
+      const res = await fetch(`${API.BRANDS}/${id}`, {
+        method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -98,17 +133,10 @@ const SoftwareBrandCreate: FC = () => {
         await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Failed to create brand");
+        throw new Error(data.message || "Failed to update brand");
       }
 
-      toast.success(data.message || "Brand created successfully ✨");
-
-      setName("");
-      setIsActive(true);
-      setImage(null);
-      setImagePreview(null);
-
-      // change route if your list page route is different
+      toast.success(data.message || "Brand updated successfully");
       navigate("/admin/brands");
     } catch (err: unknown) {
       toast.error(getErrorMessage(err));
@@ -117,15 +145,23 @@ const SoftwareBrandCreate: FC = () => {
     }
   };
 
+  if (fetching) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-600">Loading brand...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full space-y-6">
       {/* ================= HEADER ================= */}
       <div>
         <h1 className="text-2xl font-semibold text-[#6E4294]">
-          Create Software Brand
+          Edit Software Brand
         </h1>
         <p className="text-sm text-[#482072]">
-          Add a new brand to organize software products.
+          Update brand details and image.
         </p>
       </div>
 
@@ -148,24 +184,35 @@ const SoftwareBrandCreate: FC = () => {
 
         {/* IMAGE */}
         <div className="space-y-1">
-          <label className="text-sm font-medium text-brown">
-            Brand Image <span className="text-red-500">*</span>
-          </label>
+          <label className="text-sm font-medium text-brown">Brand Image</label>
           <p className="text-xs text-brownSoft mb-2">
-            Upload brand logo (JPEG, PNG, GIF, WebP - Max 5MB)
+            Upload new brand logo (optional - JPEG, PNG, GIF, WebP - Max 5MB)
           </p>
+          
+          {currentImageUrl && !imagePreview && (
+            <div className="mb-3">
+              <p className="text-xs text-brownSoft mb-2">Current Image:</p>
+              <img
+                src={API_ENDPOINTS.SOFTWARE_BRAND_IMAGE(currentImageUrl)}
+                alt="Current brand"
+                className="w-32 h-32 object-contain border border-slate-200 rounded-lg p-2"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
           
           <input
             type="file"
             accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
             onChange={handleImageChange}
-            required
             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
           />
           
           {imagePreview && (
             <div className="mt-3">
-              <p className="text-xs text-brownSoft mb-2">Preview:</p>
+              <p className="text-xs text-brownSoft mb-2">New Preview:</p>
               <img
                 src={imagePreview}
                 alt="Brand preview"
@@ -180,7 +227,7 @@ const SoftwareBrandCreate: FC = () => {
           <div>
             <p className="text-sm font-medium text-brown">Active</p>
             <p className="text-xs text-brownSoft">
-              Inactive brands won’t be shown to users
+              Inactive brands won't be shown to users
             </p>
           </div>
 
@@ -203,11 +250,18 @@ const SoftwareBrandCreate: FC = () => {
         {/* ACTIONS */}
         <div className="flex justify-end gap-3 pt-4">
           <button
+            type="button"
+            onClick={() => navigate("/admin/brands")}
+            className="px-4 py-2 border rounded-lg text-sm"
+          >
+            Cancel
+          </button>
+          <button
             type="submit"
             disabled={loading}
             className="px-6 py-2 rounded-lg bg-[#6E4294] text-white text-sm font-medium hover:bg-[#6E4294]/90 disabled:opacity-60"
           >
-            {loading ? "Creating..." : "Create Brand"}
+            {loading ? "Updating..." : "Update Brand"}
           </button>
         </div>
       </form>
@@ -215,4 +269,4 @@ const SoftwareBrandCreate: FC = () => {
   );
 };
 
-export default SoftwareBrandCreate;
+export default SoftwareBrandEdit;

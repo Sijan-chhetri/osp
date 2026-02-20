@@ -15,6 +15,9 @@ export type SoftwarePlan = {
   price: number;
   special_price: number | null;
   features: string | null;
+  activation_key: string | null;
+  start_date: string | null;
+  expiry_date: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -47,6 +50,9 @@ const SoftwarePlanCreate: FC = () => {
   const [price, setPrice] = useState<string>("");
   const [specialPrice, setSpecialPrice] = useState<string>("");
   const [features, setFeatures] = useState<string>("");
+  const [activationKey, setActivationKey] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>("");
+  const [expiryDate, setExpiryDate] = useState<string>("");
   const [isActive, setIsActive] = useState<SoftwarePlan["is_active"]>(true);
 
   const [loading, setLoading] = useState(false);
@@ -118,6 +124,22 @@ const SoftwarePlanCreate: FC = () => {
         toast.error("Special price must be a valid number");
         return;
       }
+      
+      // Validate special price is not greater than regular price
+      if (parsedSpecial !== null && parsedSpecial > parsedPrice) {
+        toast.error("Special price must be less than or equal to regular price");
+        return;
+      }
+      
+      // Validate dates
+      if (startDate && expiryDate) {
+        const start = new Date(startDate);
+        const expiry = new Date(expiryDate);
+        if (expiry <= start) {
+          toast.error("Expiry date must be after start date");
+          return;
+        }
+      }
 
       const payload = {
         software_product_id: softwareProductId,
@@ -126,6 +148,9 @@ const SoftwarePlanCreate: FC = () => {
         price: parsedPrice,
         special_price: parsedSpecial,
         features: features.trim() ? features.trim() : null,
+        activation_key: activationKey.trim() ? activationKey.trim() : null,
+        start_date: startDate ? startDate : null,
+        expiry_date: expiryDate ? expiryDate : null,
         is_active: isActive,
       };
 
@@ -152,6 +177,9 @@ const SoftwarePlanCreate: FC = () => {
       setPrice("");
       setSpecialPrice("");
       setFeatures("");
+      setActivationKey("");
+      setStartDate("");
+      setExpiryDate("");
       setIsActive(true);
 
       // change route if your list page route differs
@@ -279,6 +307,50 @@ const SoftwarePlanCreate: FC = () => {
             rows={4}
             className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
           />
+        </div>
+
+        {/* ACTIVATION KEY */}
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-brown">
+            Activation Key (optional)
+          </label>
+          <input
+            value={activationKey}
+            onChange={(e) => setActivationKey(e.target.value)}
+            placeholder="e.g. XXXX-XXXX-XXXX-XXXX"
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+
+        {/* START DATE + EXPIRY DATE */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-brown">
+              Start Date (optional)
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-brown">
+              Expiry Date (optional)
+            </label>
+            <input
+              type="date"
+              value={expiryDate}
+              onChange={(e) => setExpiryDate(e.target.value)}
+              min={startDate || undefined}
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+            {startDate && expiryDate && new Date(expiryDate) <= new Date(startDate) && (
+              <p className="text-xs text-red-600">Expiry date must be after start date</p>
+            )}
+          </div>
         </div>
 
         {/* ACTIVE */}

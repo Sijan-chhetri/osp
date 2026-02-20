@@ -21,6 +21,9 @@ export type SoftwarePlanRow = {
   price: number;
   special_price: number | null;
   features: string | null;
+  activation_key: string | null;
+  start_date: string | null;
+  expiry_date: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -66,6 +69,9 @@ const SoftwarePlanList: FC = () => {
   const [editPrice, setEditPrice] = useState<string>("");
   const [editSpecialPrice, setEditSpecialPrice] = useState<string>("");
   const [editFeatures, setEditFeatures] = useState<string>("");
+  const [editActivationKey, setEditActivationKey] = useState<string>("");
+  const [editStartDate, setEditStartDate] = useState<string>("");
+  const [editExpiryDate, setEditExpiryDate] = useState<string>("");
   const [editActive, setEditActive] = useState(true);
 
   const [deleteTarget, setDeleteTarget] = useState<SoftwarePlanRow | null>(
@@ -228,6 +234,20 @@ const SoftwarePlanList: FC = () => {
       ) {
         return toast.error("Special price must be a valid number");
       }
+      
+      // Validate special price is not greater than regular price
+      if (parsedSpecial !== null && parsedSpecial > parsedPrice) {
+        return toast.error("Special price must be less than or equal to regular price");
+      }
+      
+      // Validate dates
+      if (editStartDate && editExpiryDate) {
+        const start = new Date(editStartDate);
+        const expiry = new Date(editExpiryDate);
+        if (expiry <= start) {
+          return toast.error("Expiry date must be after start date");
+        }
+      }
 
       const payload = {
         software_product_id: editProductId,
@@ -236,6 +256,9 @@ const SoftwarePlanList: FC = () => {
         price: parsedPrice,
         special_price: parsedSpecial,
         features: editFeatures.trim() ? editFeatures.trim() : null,
+        activation_key: editActivationKey.trim() ? editActivationKey.trim() : null,
+        start_date: editStartDate ? editStartDate : null,
+        expiry_date: editExpiryDate ? editExpiryDate : null,
         is_active: editActive,
       };
 
@@ -427,6 +450,9 @@ const SoftwarePlanList: FC = () => {
                             : String(pl.special_price),
                         );
                         setEditFeatures(pl.features || "");
+                        setEditActivationKey(pl.activation_key || "");
+                        setEditStartDate(pl.start_date || "");
+                        setEditExpiryDate(pl.expiry_date || "");
                         setEditActive(pl.is_active);
                       }}
                       className="p-2 rounded-lg text-brownSoft hover:text-[#6E4294] hover:bg-[#6E4294]/10 transition"
@@ -555,6 +581,18 @@ const SoftwarePlanList: FC = () => {
                     label="Updated At"
                     value={new Date(viewPlan.updated_at).toLocaleString()}
                   />
+                  <Detail
+                    label="Activation Key"
+                    value={viewPlan.activation_key || "—"}
+                  />
+                  <Detail
+                    label="Start Date"
+                    value={viewPlan.start_date ? new Date(viewPlan.start_date).toLocaleDateString() : "—"}
+                  />
+                  <Detail
+                    label="Expiry Date"
+                    value={viewPlan.expiry_date ? new Date(viewPlan.expiry_date).toLocaleDateString() : "—"}
+                  />
                 </div>
 
                 <div>
@@ -581,6 +619,9 @@ const SoftwarePlanList: FC = () => {
                           : String(viewPlan.special_price),
                       );
                       setEditFeatures(viewPlan.features || "");
+                      setEditActivationKey(viewPlan.activation_key || "");
+                      setEditStartDate(viewPlan.start_date || "");
+                      setEditExpiryDate(viewPlan.expiry_date || "");
                       setEditActive(viewPlan.is_active);
                       closeViewModal();
                     }}
@@ -668,6 +709,39 @@ const SoftwarePlanList: FC = () => {
                 rows={4}
                 placeholder="Features (optional)"
               />
+
+              <input
+                value={editActivationKey}
+                onChange={(e) => setEditActivationKey(e.target.value)}
+                className="w-full px-4 py-2 border rounded-lg"
+                placeholder="Activation Key (optional)"
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-brownSoft mb-1 block">Start Date</label>
+                  <input
+                    type="date"
+                    value={editStartDate}
+                    onChange={(e) => setEditStartDate(e.target.value)}
+                    className="w-full px-4 py-2 border rounded-lg"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-brownSoft mb-1 block">Expiry Date</label>
+                  <input
+                    type="date"
+                    value={editExpiryDate}
+                    onChange={(e) => setEditExpiryDate(e.target.value)}
+                    min={editStartDate || undefined}
+                    className="w-full px-4 py-2 border rounded-lg"
+                  />
+                  {editStartDate && editExpiryDate && new Date(editExpiryDate) <= new Date(editStartDate) && (
+                    <p className="text-xs text-red-600 mt-1">Expiry date must be after start date</p>
+                  )}
+                </div>
+              </div>
 
               <label className="flex items-center gap-2 text-sm">
                 <input

@@ -4,6 +4,7 @@ import Navbar from "../../components/osp/Navbar";
 import Footer from "../../components/osp/Footer";
 import { API_ENDPOINTS } from "../../api/api";
 import { getAuthToken } from "../../utils/auth";
+import toast from "react-hot-toast";
 
 interface Plan {
   id: string;
@@ -135,7 +136,7 @@ const Checkout: React.FC = () => {
     e.preventDefault();
     
     if (!selectedPayment) {
-      alert("Please select a payment method");
+      toast.error("Please select a payment method");
       return;
     }
 
@@ -165,21 +166,47 @@ const Checkout: React.FC = () => {
       let endpoint;
 
       if (userToken) {
-        // Logged-in user: Order from cart
-        endpoint = API_ENDPOINTS.ORDER_FROM_CART;
-        const payload = {
-          billing_info: billingInfo,
-          payment_method: paymentMethod,
-        };
+        // Logged-in user
+        if (product && plan && !isMultipleItems) {
+          // Direct purchase - single item
+          endpoint = API_ENDPOINTS.ORDER_GUEST; // Use guest endpoint for direct purchase
+          const items = [{
+            software_plan_id: plan.id,
+            quantity: 1,
+            unit_price: parseFloat(plan.price),
+          }];
 
-        response = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${userToken}`,
-          },
-          body: JSON.stringify(payload),
-        });
+          const payload = {
+            billing_info: billingInfo,
+            payment_method: paymentMethod,
+            items: items,
+          };
+
+          response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${userToken}`,
+            },
+            body: JSON.stringify(payload),
+          });
+        } else {
+          // Order from cart
+          endpoint = API_ENDPOINTS.ORDER_FROM_CART;
+          const payload = {
+            billing_info: billingInfo,
+            payment_method: paymentMethod,
+          };
+
+          response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${userToken}`,
+            },
+            body: JSON.stringify(payload),
+          });
+        }
       } else {
         // Guest user: Order with items from localStorage
         endpoint = API_ENDPOINTS.ORDER_GUEST;
@@ -211,7 +238,7 @@ const Checkout: React.FC = () => {
         }
 
         if (items.length === 0) {
-          alert("No items to checkout");
+          toast.error("No items to checkout");
           setIsSubmitting(false);
           return;
         }
@@ -239,21 +266,44 @@ const Checkout: React.FC = () => {
           localStorage.removeItem("cart");
         }
 
-        alert(`Order placed successfully! Order ID: ${data.order?.id || "N/A"}`);
-        navigate("/"); // Redirect to home or order confirmation page
+        // Dispatch cart update event
+        window.dispatchEvent(new Event("cartUpdated"));
+
+        toast.success(`Order placed successfully! Order ID: ${data.order?.id?.slice(0, 8) || "N/A"}`);
+        
+        // Redirect to order history page
+        setTimeout(() => {
+          navigate("/my-orders");
+        }, 1000);
       } else {
         alert(data.message || "Failed to place order. Please try again.");
       }
     } catch (error) {
       console.error("Error placing order:", error);
-      alert("An error occurred while placing your order. Please try again.");
+      toast.error("An error occurred while placing your order. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   if ((!product || !plan) && !cartItems && !apiCartItems) {
-    return null;
+    return (
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <p className="text-xl text-gray-600 mb-4">No items to checkout</p>
+            <button
+              onClick={() => navigate("/")}
+              className="bg-[#7B5DE8] text-white px-6 py-3 rounded-full hover:bg-[#6A4BC4]"
+            >
+              Continue Shopping
+            </button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
   }
 
   // Calculate totals

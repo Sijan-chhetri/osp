@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from "../../api/api";
 import toast from "react-hot-toast";
-import { getAuthToken } from "../../utils/auth";
+import { getAuthToken, isDistributor } from "../../utils/auth";
 
 interface CartridgeProduct {
   id: string;
@@ -13,6 +13,7 @@ interface CartridgeProduct {
   description: string;
   unit_price: number;
   special_price: number | null;
+  quantity: number;
   is_active: boolean;
   created_by: string;
   created_at: string;
@@ -21,8 +22,13 @@ interface CartridgeProduct {
 
 const ProductCard: React.FC<{ product: CartridgeProduct; onCartUpdate: () => void }> = ({ product, onCartUpdate }) => {
   const navigate = useNavigate();
-  const displayPrice = product.special_price || product.unit_price;
-  const hasDiscount = product.special_price && product.special_price < product.unit_price;
+  
+  // Only show special price to distributors
+  const userIsDistributor = isDistributor();
+  const displayPrice = userIsDistributor && product.special_price 
+    ? product.special_price 
+    : product.unit_price;
+  const hasDiscount = userIsDistributor && product.special_price && product.special_price < product.unit_price;
 
   const handleViewDetails = () => {
     navigate(`/eg/cartridge/${product.id}`);
@@ -31,12 +37,18 @@ const ProductCard: React.FC<{ product: CartridgeProduct; onCartUpdate: () => voi
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
+    // Check if product is out of stock
+    if (product.quantity <= 0) {
+      toast.error("This product is out of stock");
+      return;
+    }
+
     const token = getAuthToken();
 
     if (token) {
-      // Logged-in user: Use API
-      try {
-        const response = await fetch(API_ENDPOINTS.CARTRIDGE_CART_ADD, {
+      // Logged-in user: Use API - fire and forget for speed
+      toast.promise(
+        fetch(API_ENDPOINTS.CARTRIDGE_CART_ADD, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -46,20 +58,20 @@ const ProductCard: React.FC<{ product: CartridgeProduct; onCartUpdate: () => voi
             cartridge_product_id: product.id,
             quantity: 1,
           }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          toast.success(`${product.product_name} added to cart!`);
+        }).then(async (response) => {
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.message || "Failed to add to cart");
+          }
           onCartUpdate();
-        } else {
-          toast.error(data.message || "Failed to add to cart");
+          return data;
+        }),
+        {
+          loading: 'Adding...',
+          success: `${product.product_name} added to cart!`,
+          error: (err) => err.message || 'Failed to add to cart',
         }
-      } catch (error) {
-        console.error("Error adding to cart:", error);
-        toast.error("Error adding to cart");
-      }
+      );
     } else {
       // Guest user: Use localStorage
       const existingCart = localStorage.getItem("cartridgeCart");
@@ -69,8 +81,14 @@ const ProductCard: React.FC<{ product: CartridgeProduct; onCartUpdate: () => voi
       const existingItemIndex = cart.findIndex((item: any) => item.id === product.id);
 
       if (existingItemIndex > -1) {
+        // Check if increasing quantity would exceed stock
+        const newQuantity = cart[existingItemIndex].quantity + 1;
+        if (newQuantity > product.quantity) {
+          toast.error(`Cannot add more! Only ${product.quantity} items available in stock`);
+          return;
+        }
         // Increase quantity
-        cart[existingItemIndex].quantity += 1;
+        cart[existingItemIndex].quantity = newQuantity;
         toast.success(`Increased quantity of ${product.product_name}`);
       } else {
         // Add new item
@@ -81,6 +99,7 @@ const ProductCard: React.FC<{ product: CartridgeProduct; onCartUpdate: () => voi
           unit_price: product.unit_price,
           special_price: product.special_price,
           quantity: 1,
+          max_quantity: product.quantity,
         });
         toast.success(`${product.product_name} added to cart!`);
       }
@@ -96,8 +115,9 @@ const ProductCard: React.FC<{ product: CartridgeProduct; onCartUpdate: () => voi
       {/* Product Image with Badge */}
       <div className="relative w-full flex items-center justify-center mb-6 h-48 cursor-pointer" onClick={handleViewDetails}>
         {hasDiscount && (
-          <div className="absolute top-0 right-0 bg-[#dc2626] text-white px-4 py-2 rounded-lg font-bold text-sm transform rotate-12">
-            SAVE Rs. {product.unit_price - product.special_price!}
+          <div className="absolute top-0 right-0 bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg">
+            <div className="text-xs">Distributor Price</div>
+            <div>SAVE Rs. {product.unit_price - product.special_price!}</div>
           </div>
         )}
         <img
@@ -115,10 +135,28 @@ const ProductCard: React.FC<{ product: CartridgeProduct; onCartUpdate: () => voi
       {/* Model Number */}
       <p className="text-gray-500 text-sm mb-4">Model: {product.model_number}</p>
 
+      {/* Stock Status */}
+      <div className="mb-4">
+        {product.quantity > 0 ? (
+          <p className="text-green-600 text-xs font-semibold">
+            ✓ In Stock ({product.quantity} available)
+          </p>
+        ) : (
+          <p className="text-red-600 text-xs font-semibold">
+            ✗ Out of Stock
+          </p>
+        )}
+      </div>
+
       {/* Price and Buttons */}
       <div className="w-full space-y-3">
         <div className="flex items-center justify-between">
-          <div>
+          <div className="w-full">
+            {hasDiscount && (
+              <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-2">
+                <p className="text-green-700 text-xs font-semibold">🎉 Distributor Special Price</p>
+              </div>
+            )}
             <p className="text-gray-500 text-sm">Price</p>
             <div className="flex items-center gap-2">
               <p className="text-[#1e3a8a] font-bold text-xl">Rs. {displayPrice}</p>
@@ -133,15 +171,17 @@ const ProductCard: React.FC<{ product: CartridgeProduct; onCartUpdate: () => voi
         <div className="flex gap-2">
           <button 
             onClick={handleAddToCart}
-            className="flex-1 bg-white border-2 border-[#1e3a8a] text-[#1e3a8a] px-6 py-3 rounded-full font-semibold hover:bg-[#1e3a8a] hover:text-white transition-all duration-200"
+            disabled={product.quantity <= 0}
+            className="flex-1 bg-white border-2 border-[#1e3a8a] text-[#1e3a8a] px-6 py-3 rounded-full font-semibold hover:bg-[#1e3a8a] hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[#1e3a8a]"
           >
-            Add to Cart
+            {product.quantity <= 0 ? "Out of Stock" : "Add to Cart"}
           </button>
           <button 
             onClick={handleViewDetails}
-            className="flex-1 bg-[#1e3a8a] text-white px-6 py-3 rounded-full font-semibold hover:bg-[#1e40af] transition-all duration-200"
+            disabled={product.quantity <= 0}
+            className="flex-1 bg-[#1e3a8a] text-white px-6 py-3 rounded-full font-semibold hover:bg-[#1e40af] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Buy Now
+            {product.quantity <= 0 ? "Out of Stock" : "Buy Now"}
           </button>
         </div>
       </div>
@@ -153,14 +193,12 @@ const EgProduct: React.FC = () => {
   const [products, setProducts] = useState<CartridgeProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [cartUpdateTrigger, setCartUpdateTrigger] = useState(0);
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
   const handleCartUpdate = () => {
-    setCartUpdateTrigger(prev => prev + 1);
     // Dispatch custom event for navbar to update cart count
     window.dispatchEvent(new Event("cartUpdated"));
   };

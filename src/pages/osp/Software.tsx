@@ -9,7 +9,7 @@ import { getAuthToken, isDistributor } from "../../utils/auth";
 interface BrandFromAPI {
   id: string;
   name: string;
-  image_url: string;
+  thumbnail_url: string | null;
 }
 
 interface Plan {

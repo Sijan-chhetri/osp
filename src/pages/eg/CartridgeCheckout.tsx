@@ -4,6 +4,7 @@ import EgNavbar from "../../components/eg/egNavbar";
 import EgFooter from "../../components/eg/egFooter";
 import { API_ENDPOINTS } from "../../api/api";
 import { getAuthToken } from "../../utils/auth";
+import toast from "react-hot-toast";
 
 interface CartItem {
   id: string;
@@ -138,7 +139,7 @@ const CartridgeCheckout: React.FC = () => {
     e.preventDefault();
     
     if (!selectedPayment) {
-      alert("Please select a payment method");
+      toast.error("Please select a payment method");
       return;
     }
 
@@ -214,21 +215,41 @@ const CartridgeCheckout: React.FC = () => {
         // Dispatch cart update event
         window.dispatchEvent(new Event("cartUpdated"));
 
-        alert(`Order placed successfully! Order ID: ${data.order.id}`);
-        navigate("/eg");
+        toast.success(`Order placed successfully! Order ID: ${data.order.id.slice(0, 8)}`);
+        
+        // Redirect to order history page
+        setTimeout(() => {
+          navigate("/eg/my-orders");
+        }, 1000);
       } else {
-        alert(data.message || "Failed to place order. Please try again.");
+        toast.error(data.message || "Failed to place order. Please try again.");
       }
     } catch (error) {
       console.error("Error placing order:", error);
-      alert("An error occurred while placing your order. Please try again.");
+      toast.error("An error occurred while placing your order. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   if (!cartItems && !cartridgeProduct) {
-    return null;
+    return (
+      <div className="min-h-screen bg-white">
+        <EgNavbar />
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <p className="text-xl text-gray-600 mb-4">No items to checkout</p>
+            <button
+              onClick={() => navigate("/eg")}
+              className="bg-[#1e3a8a] text-white px-6 py-3 rounded-full hover:bg-[#1e40af]"
+            >
+              Continue Shopping
+            </button>
+          </div>
+        </div>
+        <EgFooter />
+      </div>
+    );
   }
 
   // Calculate totals
