@@ -1,10 +1,14 @@
 import React, { useState } from "react";
+import { API_ENDPOINTS } from "../../api/api";
+import toast from "react-hot-toast";
 
 const Activationkey: React.FC = () => {
   const [formData, setFormData] = useState({
     phoneNumber: "",
     serialNumber: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -14,10 +18,45 @@ const Activationkey: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Activation form submitted:", formData);
-    // Handle activation logic here
+    setLoading(true);
+    setSuccessMessage("");
+
+    try {
+      const response = await fetch(`${API_ENDPOINTS.ACTIVATION_REQUEST_KEY}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          serial_number: formData.serialNumber,
+          phone: formData.phoneNumber,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to request activation key");
+      }
+
+      // Success
+      setSuccessMessage(data.message || "Activation key request submitted successfully!");
+      toast.success("Activation key request submitted successfully!");
+      
+      // Clear form
+      setFormData({
+        phoneNumber: "",
+        serialNumber: "",
+      });
+    } catch (error) {
+      console.error("Error requesting activation key:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to submit request. Please try again.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -82,6 +121,16 @@ const Activationkey: React.FC = () => {
                 Enter your details to receive your software activation key instantly
               </p>
 
+              {/* Success Message */}
+              {successMessage && (
+                <div className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-green-700 text-sm flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  {successMessage}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Phone Number */}
                 <div>
@@ -118,9 +167,10 @@ const Activationkey: React.FC = () => {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  className="w-full bg-[#7B5DE8] text-white py-4 rounded-full font-bold text-xl hover:bg-[#6A4BC4] transition-all duration-300 shadow-lg hover:shadow-xl"
+                  disabled={loading}
+                  className="w-full bg-[#7B5DE8] text-white py-4 rounded-full font-bold text-xl hover:bg-[#6A4BC4] transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Submit
+                  {loading ? "Submitting..." : "Submit"}
                 </button>
               </form>
 

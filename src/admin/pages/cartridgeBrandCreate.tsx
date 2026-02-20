@@ -1,36 +1,13 @@
-// src/admin/pages/softwareBrandCreate.tsx
 import { useState } from "react";
 import type { FC } from "react";
 import toast from "react-hot-toast";
-import { API } from "../../config/api.ts";
+import { API_ENDPOINTS } from "../../api/api";
 import { useNavigate } from "react-router-dom";
 
-/* ================= TYPES ================= */
-
-export type SoftwareBrand = {
-  id: string;
-  name: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-};
-
-type ApiErrorResponse = {
-  message?: string;
-};
-
-const getErrorMessage = (err: unknown): string => {
-  if (err instanceof Error) return err.message;
-  return "Something went wrong";
-};
-
-/* ================= COMPONENT ================= */
-
-const SoftwareBrandCreate: FC = () => {
+const CartridgeBrandCreate: FC = () => {
   const navigate = useNavigate();
-
-  const [name, setName] = useState<SoftwareBrand["name"]>("");
-  const [isActive, setIsActive] = useState<SoftwareBrand["is_active"]>(true);
+  const [name, setName] = useState("");
+  const [isActive, setIsActive] = useState(true);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -86,7 +63,7 @@ const SoftwareBrandCreate: FC = () => {
       formData.append("is_active", String(isActive));
       formData.append("image", image);
 
-      const res = await fetch(API.BRANDS, {
+      const response = await fetch(API_ENDPOINTS.CARTRIDGE_BRANDS, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -94,24 +71,21 @@ const SoftwareBrandCreate: FC = () => {
         body: formData,
       });
 
-      const data: ApiErrorResponse & { data?: SoftwareBrand } =
-        await res.json();
+      const data = await response.json();
 
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to create brand");
+      if (response.ok) {
+        toast.success("Brand created successfully ✨");
+        setName("");
+        setIsActive(true);
+        setImage(null);
+        setImagePreview(null);
+        navigate("/admin/cartridge/brands");
+      } else {
+        toast.error(data.message || "Failed to create brand");
       }
-
-      toast.success(data.message || "Brand created successfully ✨");
-
-      setName("");
-      setIsActive(true);
-      setImage(null);
-      setImagePreview(null);
-
-      // change route if your list page route is different
-      navigate("/admin/brands");
-    } catch (err: unknown) {
-      toast.error(getErrorMessage(err));
+    } catch (err) {
+      toast.error("Error creating brand");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -119,34 +93,26 @@ const SoftwareBrandCreate: FC = () => {
 
   return (
     <div className="w-full space-y-6">
-      {/* ================= HEADER ================= */}
       <div>
-        <h1 className="text-2xl font-semibold text-[#6E4294]">
-          Create Software Brand
-        </h1>
-        <p className="text-sm text-[#482072]">
-          Add a new brand to organize software products.
-        </p>
+        <h1 className="text-2xl font-semibold text-[#6E4294]">Create Cartridge Brand</h1>
+        <p className="text-sm text-[#482072]">Add a new brand to organize cartridge products.</p>
       </div>
 
-      {/* ================= FORM ================= */}
       <form
         onSubmit={handleSubmit}
         className="bg-white rounded-xl border border-slate-200 p-6 space-y-6"
       >
-        {/* NAME */}
         <div className="space-y-1">
           <label className="text-sm font-medium text-brown">Brand Name</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            placeholder="e.g. Microsoft"
-            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+            placeholder="e.g. HP"
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#6E4294]"
           />
         </div>
 
-        {/* IMAGE */}
         <div className="space-y-1">
           <label className="text-sm font-medium text-brown">
             Brand Image <span className="text-red-500">*</span>
@@ -160,7 +126,7 @@ const SoftwareBrandCreate: FC = () => {
             accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
             onChange={handleImageChange}
             required
-            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#6E4294]"
           />
           
           {imagePreview && (
@@ -175,13 +141,10 @@ const SoftwareBrandCreate: FC = () => {
           )}
         </div>
 
-        {/* ACTIVE */}
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-brown">Active</p>
-            <p className="text-xs text-brownSoft">
-              Inactive brands won’t be shown to users
-            </p>
+            <p className="text-xs text-brownSoft">Inactive brands won't be shown to users</p>
           </div>
 
           <button
@@ -200,7 +163,6 @@ const SoftwareBrandCreate: FC = () => {
           </button>
         </div>
 
-        {/* ACTIONS */}
         <div className="flex justify-end gap-3 pt-4">
           <button
             type="submit"
@@ -215,4 +177,4 @@ const SoftwareBrandCreate: FC = () => {
   );
 };
 
-export default SoftwareBrandCreate;
+export default CartridgeBrandCreate;
