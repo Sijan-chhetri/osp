@@ -167,14 +167,33 @@ const Checkout: React.FC = () => {
 
       if (userToken) {
         // Logged-in user
-        if (product && plan && !isMultipleItems) {
-          // Direct purchase - single item
+        if ((product && plan && !isMultipleItems) || (isMultipleItems && (cartItems || apiCartItems))) {
+          // Direct purchase - single or multiple items
           endpoint = API_ENDPOINTS.ORDER_GUEST; // Use guest endpoint for direct purchase
-          const items = [{
-            software_plan_id: plan.id,
-            quantity: 1,
-            unit_price: parseFloat(plan.price),
-          }];
+          let items: any[] = [];
+
+          if (isMultipleItems && apiCartItems) {
+            // Multiple items from API cart
+            items = apiCartItems.map((item) => ({
+              software_plan_id: item.software_plan_id,
+              quantity: item.quantity,
+              unit_price: item.unit_price,
+            }));
+          } else if (isMultipleItems && cartItems) {
+            // Multiple items from local cart
+            items = cartItems.map((item) => ({
+              software_plan_id: item.plan.id,
+              quantity: item.quantity,
+              unit_price: parseFloat(item.plan.price),
+            }));
+          } else if (product && plan) {
+            // Single item
+            items = [{
+              software_plan_id: plan.id,
+              quantity: 1,
+              unit_price: parseFloat(plan.price),
+            }];
+          }
 
           const payload = {
             billing_info: billingInfo,
@@ -191,7 +210,7 @@ const Checkout: React.FC = () => {
             body: JSON.stringify(payload),
           });
         } else {
-          // Order from cart
+          // Order from cart (when no items passed, use cart endpoint)
           endpoint = API_ENDPOINTS.ORDER_FROM_CART;
           const payload = {
             billing_info: billingInfo,
@@ -208,33 +227,46 @@ const Checkout: React.FC = () => {
           });
         }
       } else {
-        // Guest user: Order with items from localStorage
+        // Guest user: Order with items from localStorage or passed items
         endpoint = API_ENDPOINTS.ORDER_GUEST;
         
-        // Get items from localStorage
-        const localCart = localStorage.getItem("cart");
         let items: any[] = [];
 
-        if (localCart) {
-          try {
-            const cartData = JSON.parse(localCart);
-            items = cartData.map((item: CartItem) => ({
-              software_plan_id: item.plan.id,
-              quantity: item.quantity,
-              unit_price: parseFloat(item.plan.price),
-            }));
-          } catch (error) {
-            console.error("Error parsing cart:", error);
-          }
-        }
-
-        // If single item checkout (not from cart)
-        if (!isMultipleItems && product && plan) {
+        // Priority 1: Use passed items (apiCartItems or cartItems)
+        if (isMultipleItems && apiCartItems) {
+          items = apiCartItems.map((item) => ({
+            software_plan_id: item.software_plan_id,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+          }));
+        } else if (isMultipleItems && cartItems) {
+          items = cartItems.map((item) => ({
+            software_plan_id: item.plan.id,
+            quantity: item.quantity,
+            unit_price: parseFloat(item.plan.price),
+          }));
+        } else if (product && plan && !isMultipleItems) {
+          // Single item direct purchase
           items = [{
             software_plan_id: plan.id,
             quantity: 1,
             unit_price: parseFloat(plan.price),
           }];
+        } else {
+          // Priority 2: Get items from localStorage
+          const localCart = localStorage.getItem("cart");
+          if (localCart) {
+            try {
+              const cartData = JSON.parse(localCart);
+              items = cartData.map((item: CartItem) => ({
+                software_plan_id: item.plan.id,
+                quantity: item.quantity,
+                unit_price: parseFloat(item.plan.price),
+              }));
+            } catch (error) {
+              console.error("Error parsing cart:", error);
+            }
+          }
         }
 
         if (items.length === 0) {
