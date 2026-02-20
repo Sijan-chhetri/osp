@@ -212,15 +212,6 @@ const Cart: React.FC = () => {
     }
   };
 
-  const handleCheckout = (item: CartItem) => {
-    navigate("/checkout", {
-      state: {
-        product: item.product,
-        plan: item.plan,
-      },
-    });
-  };
-
   const handleCheckoutSelected = () => {
     if (selectedItems.length === 0) {
       alert("Please select at least one item to checkout");
@@ -915,10 +906,11 @@ const Cart: React.FC = () => {
 
                       <button
                         onClick={() => {
+                          // For API items, pass the item with its current quantity
                           navigate("/checkout", {
                             state: {
                               apiCartItems: [item],
-                              isMultipleItems: false,
+                              isMultipleItems: true,
                               isFromAPI: true,
                             },
                           });
@@ -1063,8 +1055,16 @@ const Cart: React.FC = () => {
                       </div>
 
                       <button
-                        onClick={() => handleCheckout(item)}
-                        className="w-full bg-white border-2 border-[#6E4294] text-[#6E4294] py-3 rounded-xl font-semibold hover:bg-[#6E4294] hover:text-white transition-all"
+                        onClick={() => {
+                          // Pass the item with its current quantity
+                          navigate("/checkout", {
+                            state: {
+                              cartItems: [item],
+                              isMultipleItems: true,
+                            },
+                          });
+                        }}
+                        className="w-full mt-4 bg-white border-2 border-[#6E4294] text-[#6E4294] py-2 rounded-lg font-semibold hover:bg-[#6E4294] hover:text-white transition-all"
                       >
                         Checkout This Item
                       </button>
