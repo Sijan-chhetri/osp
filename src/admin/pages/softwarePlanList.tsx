@@ -469,11 +469,14 @@ const SoftwarePlanList: FC = () => {
                         );
                         setEditFeatures(pl.features || "");
                         setEditActivationKey(pl.activation_key || "");
-                        // Format dates for date input (YYYY-MM-DD)
+                        // Format dates for date input (YYYY-MM-DD) - use local date to avoid timezone issues
                         if (pl.start_date) {
                           try {
                             const date = new Date(pl.start_date);
-                            setEditStartDate(date.toISOString().split('T')[0]);
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            setEditStartDate(`${year}-${month}-${day}`);
                           } catch {
                             setEditStartDate("");
                           }
@@ -483,7 +486,10 @@ const SoftwarePlanList: FC = () => {
                         if (pl.expiry_date) {
                           try {
                             const date = new Date(pl.expiry_date);
-                            setEditExpiryDate(date.toISOString().split('T')[0]);
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            setEditExpiryDate(`${year}-${month}-${day}`);
                           } catch {
                             setEditExpiryDate("");
                           }
@@ -657,11 +663,14 @@ const SoftwarePlanList: FC = () => {
                       );
                       setEditFeatures(viewPlan.features || "");
                       setEditActivationKey(viewPlan.activation_key || "");
-                      // Format dates for date input (YYYY-MM-DD)
+                      // Format dates for date input (YYYY-MM-DD) - use local date to avoid timezone issues
                       if (viewPlan.start_date) {
                         try {
                           const date = new Date(viewPlan.start_date);
-                          setEditStartDate(date.toISOString().split('T')[0]);
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, '0');
+                          const day = String(date.getDate()).padStart(2, '0');
+                          setEditStartDate(`${year}-${month}-${day}`);
                         } catch {
                           setEditStartDate("");
                         }
@@ -671,7 +680,10 @@ const SoftwarePlanList: FC = () => {
                       if (viewPlan.expiry_date) {
                         try {
                           const date = new Date(viewPlan.expiry_date);
-                          setEditExpiryDate(date.toISOString().split('T')[0]);
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, '0');
+                          const day = String(date.getDate()).padStart(2, '0');
+                          setEditExpiryDate(`${year}-${month}-${day}`);
                         } catch {
                           setEditExpiryDate("");
                         }
